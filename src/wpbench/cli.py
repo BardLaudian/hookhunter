@@ -20,6 +20,7 @@ from wpbench.cases import DEFAULT_DATASET, Case, Issue, load_cases, summarise
 from wpbench.diff import CHANGED_LINES_LIMIT, changed_lines, diff_trees
 from wpbench.execute import Context, execute
 from wpbench.fetch import FetchError, fetch_case, http_download
+from wpbench.probe import build_prompt, judge
 from wpbench.runplan import (
     BASE_CONTEXT_TOKENS,
     CONDITIONS,
@@ -35,6 +36,19 @@ from wpbench.runplan import (
     preflight,
     project,
     source_tokens,
+)
+from wpbench.score import (
+    LABELS,
+    load_records,
+    precision_breakdown,
+    read_sheet,
+    sample_unmatched,
+    score_records,
+    write_outputs,
+    write_sheet,
+)
+from wpbench.score import (
+    summarise as summarise_scores,
 )
 from wpbench.split import SplitError, apply_to_text, assign, check_splits_file, write_splits_file
 
@@ -203,6 +217,7 @@ def run(
     case: Annotated[list[str] | None, typer.Option("--case", help="Run only this case id (repeatable).")] = None,
     conditions: Annotated[str, typer.Option(help="Comma separated: A, B, C-full, C-min, C-noscripts.")] = "A,B,C-full",
     repeats: Annotated[int, typer.Option(min=1, help="Repeats per run.")] = 1,
+    versions: Annotated[str, typer.Option(help="vuln, fixed or vuln,fixed (fixed = negative control).")] = "vuln,fixed",
     model: Annotated[str, typer.Option(help="Model recorded with every run.")] = DEFAULT_MODEL,
     budget_usd: Annotated[float, typer.Option(help="Hard cap per run, passed to claude --max-budget-usd.")] = 3.0,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Show the plan, the container command and the cost estimate; start nothing.")] = False,
@@ -234,11 +249,15 @@ def run(
     if not selected:
         err.print("[yellow]no cases selected[/yellow]")
         raise typer.Exit(0)
-    plan = build_plan(selected, names, repeats)
+    vers = [v.strip() for v in versions.split(",") if v.strip()]
+    if not vers or any(v not in ("vuln", "fixed") for v in vers):
+        err.print("[red]--versions must be vuln, fixed or vuln,fixed[/red]")
+        raise typer.Exit(2)
+    plan = build_plan(selected, names, repeats, vers)
     spec = ContainerSpec()
     skill_dirs = default_skill_dirs()
     price = PRICES[model]
-    console.print(f"[bold]Plan[/bold]: {len(plan)} runs = {len(selected)} cases x 2 versions (vulnerable + fixed negative control) x {len(names)} conditions x {repeats} repeat(s); model {model}; cap ${budget_usd:g}/run")
+    console.print(f"[bold]Plan[/bold]: {len(plan)} runs = {len(selected)} cases x {len(vers)} version(s) ({'+'.join(vers)}; fixed = negative control) x {len(names)} conditions x {repeats} repeat(s); model {model}; cap ${budget_usd:g}/run")
 
     ct = Table("condition", "skill", "tools", "allowed tools", "what")
     for n in names:
@@ -374,3 +393,94 @@ def env_check() -> None:
     for name, ok in (("agent image", st.image), ("proxy image", st.proxy_image), ("internal network", st.network_internal), ("proxy running", st.proxy_running)):
         console.print(f"{'[green]ok[/green]' if ok else '[red]missing[/red]'} {name}")
     raise typer.Exit(0 if st.ready else 1)
+
+
+def _pct(x: float | None) -> str:
+    return "-" if x is None or x != x else f"{100 * x:.0f}%"
+
+
+@app.command()
+def score(
+    run: Annotated[list[Path], typer.Option("--run", help="Run directory (repeatable); later ones replace the same run id.")],
+    conditions: Annotated[str, typer.Option(help="Comma separated; default all found.")] = "",
+    out: Annotated[Path | None, typer.Option(help="Output directory; default results/<first run name>.")] = None,
+    seed: Annotated[int, typer.Option(help="Seed for the bootstrap and the sheet sample.")] = 20261101,
+    boot: Annotated[int, typer.Option(min=100, help="Bootstrap resamples.")] = 10_000,
+    dataset: DatasetOpt = DEFAULT_DATASET,
+) -> None:
+    """Score runs against the signed ground truth (local, no API calls): recall, recall@3, false alarms, cost, paired bootstrap CIs."""
+    cases = _load(dataset)
+    wanted = [c.strip() for c in conditions.split(",") if c.strip()]
+    loaded = load_records(run, wanted or None)
+    rows, unsigned = score_records(loaded.records, cases)
+    if not rows:
+        err.print("[yellow]nothing to score[/yellow]")
+        raise typer.Exit(1)
+    summary = summarise_scores(rows, seed, boot)
+    out_dir = out or Path("results") / run[0].name
+    sheet_items, sampled = sample_unmatched(rows, seed)
+    previous = read_sheet(out_dir / "unmatched_sheet.csv")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    write_sheet(out_dir / "unmatched_sheet.csv", sheet_items, previous)
+    breakdown = precision_breakdown(rows, {k: v for k, v in read_sheet(out_dir / "unmatched_sheet.csv").items()})
+    write_outputs(out_dir, rows, summary, {"unsigned_cases_skipped": unsigned, "excluded_runs": loaded.excluded, "precision_breakdown": breakdown, "sheet_sampled": sampled})
+
+    t = Table("condition", "cases", "runs v/f", "recall (95% CI)", "recall@3", "false alarms", "findings/run", "cost", "$/hit", "skill loaded")
+    for s in summary["conditions"]:
+        lo, hi = s["recall_ci"]
+        t.add_row(
+            s["condition"], str(s["cases"]), f"{s['vuln_runs']}/{s['fixed_runs']}", f"{_pct(s['recall'])} ({_pct(lo)}-{_pct(hi)})", _pct(s["recall_at_3"]),
+            f"{_pct(s['false_alarm_rate'])} of {s['false_alarm_cases']}" if s["false_alarm_cases"] else "no fixed runs",
+            f"{s['findings_per_vuln_run']:.1f}" if s["findings_per_vuln_run"] is not None else "-", _money(s["cost_usd"]),
+            _money(s["cost_per_hit"]) if s["cost_per_hit"] is not None else "-", _pct(s["skill_invoked_rate"]),
+        )
+    console.print(t)
+    if any(s["cases"] < 10 for s in summary["conditions"]):
+        console.print("[yellow]fewer than 10 cases in some condition: the confidence intervals only describe resampling a handful of cases, not the skill[/yellow]")
+    for d in summary["differences"]:
+        lo, hi = d["ci"]
+        verdict = "interval excludes 0" if lo > 0 or hi < 0 else "interval includes 0: no difference shown"
+        console.print(f"{d['condition']} minus A: recall {100 * d['recall_diff']:+.0f} points over {d['paired_cases']} paired case(s), 95% CI [{100 * lo:+.0f}, {100 * hi:+.0f}] ({verdict})", highlight=False)
+    if unsigned:
+        console.print(f"[yellow]excluded, label not signed: {', '.join(unsigned)}[/yellow]")
+    if loaded.excluded:
+        console.print(f"[yellow]{len(loaded.excluded)} run(s) excluded (infrastructure error or invalid experiment):[/yellow] " + ", ".join(sorted({e['run_id'] for e in loaded.excluded})[:8]) + (" ..." if len(loaded.excluded) > 8 else ""))
+    console.print(f"labelling sheet: {out_dir / 'unmatched_sheet.csv'} ({len(sheet_items)} unmatched finding(s){', sampled' if sampled else ', all'}); fill `label` with {'/'.join(LABELS)}")
+    console.print(f"written: {out_dir}/summary.csv, summary.json, per_run.jsonl")
+
+
+@app.command()
+def probe(
+    model: Annotated[str, typer.Option(help="Model to probe (the experiment model).")] = DEFAULT_MODEL,
+    out: Annotated[Path, typer.Option(help="JSONL file for the answers and verdicts.")] = Path("results/probe.jsonl"),
+    yes: Annotated[bool, typer.Option("--yes", help="Confirm that this calls the API (about a cent per case).")] = False,
+    dataset: DatasetOpt = DEFAULT_DATASET,
+) -> None:
+    """Memorisation probe: ask the model what was fixed, with no tools and no code (docs/SPEC.md section 6)."""
+    cases = [c for c in _load(dataset) if c.signed]
+    if not cases:
+        err.print("[yellow]no signed cases[/yellow]")
+        raise typer.Exit(0)
+    if not yes:
+        console.print(f"{len(cases)} case(s) would be probed with {model}; prompt for the first:\n{build_prompt(cases[0])}\nPass --yes to call the API.")
+        raise typer.Exit(0)
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        err.print("[red]ANTHROPIC_API_KEY is not set[/red]")
+        raise typer.Exit(2)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as empty, out.open("w", encoding="utf-8") as fh:
+        for c in cases:
+            cmd = ["claude", "-p", build_prompt(c), "--tools", "", "--model", model, "--output-format", "json", "--no-session-persistence",
+                   "--setting-sources", "project", "--strict-mcp-config", "--max-budget-usd", "0.1"]
+            res = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=empty, stdin=subprocess.DEVNULL)
+            try:
+                data = json.loads(res.stdout)
+            except ValueError:
+                data = {"result": "", "is_error": True}
+            answer = str(data.get("result") or "")
+            v = judge(c, answer)
+            fh.write(json.dumps({"case_id": c.id, "model": model, "answer": answer, "cost_usd": data.get("total_cost_usd"), "names_function": v.names_function,
+                                 "names_file": v.names_file, "names_class": v.names_class, "admits_ignorance": v.admits_ignorance, "positive": v.positive}) + "\n")
+            console.print(f"{c.id}: positive={v.positive} function={v.names_function} file={v.names_file} class={v.names_class}")

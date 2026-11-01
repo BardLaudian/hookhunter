@@ -1,0 +1,264 @@
+{
+ "conditions": [
+  {
+   "condition": "A",
+   "vuln_runs": 4,
+   "fixed_runs": 3,
+   "cases": 4,
+   "recall": 0.75,
+   "recall_ci": [
+    0.25,
+    1.0
+   ],
+   "recall_at_3": 0.5,
+   "false_alarm_rate": 0.0,
+   "false_alarm_cases": 3,
+   "findings_per_vuln_run": 5.25,
+   "unmatched_per_vuln_run": 4.25,
+   "cost_usd": 1.8396318300000003,
+   "cost_per_hit": 0.6132106100000001,
+   "mean_cost_per_run": 0.26280454714285717,
+   "skill_invoked_rate": 0.0,
+   "mean_turns": 71.42857142857143
+  },
+  {
+   "condition": "B",
+   "vuln_runs": 1,
+   "fixed_runs": 0,
+   "cases": 1,
+   "recall": 1.0,
+   "recall_ci": [
+    1.0,
+    1.0
+   ],
+   "recall_at_3": 0.0,
+   "false_alarm_rate": null,
+   "false_alarm_cases": 0,
+   "findings_per_vuln_run": 9.0,
+   "unmatched_per_vuln_run": 8.0,
+   "cost_usd": 0.026512890000000004,
+   "cost_per_hit": 0.026512890000000004,
+   "mean_cost_per_run": 0.026512890000000004,
+   "skill_invoked_rate": 0.0,
+   "mean_turns": 25.0
+  },
+  {
+   "condition": "C-full",
+   "vuln_runs": 1,
+   "fixed_runs": 0,
+   "cases": 1,
+   "recall": 1.0,
+   "recall_ci": [
+    1.0,
+    1.0
+   ],
+   "recall_at_3": 0.0,
+   "false_alarm_rate": null,
+   "false_alarm_cases": 0,
+   "findings_per_vuln_run": 4.0,
+   "unmatched_per_vuln_run": 3.0,
+   "cost_usd": 0.016983269999999998,
+   "cost_per_hit": 0.016983269999999998,
+   "mean_cost_per_run": 0.016983269999999998,
+   "skill_invoked_rate": 1.0,
+   "mean_turns": 22.0
+  }
+ ],
+ "differences": [
+  {
+   "condition": "B",
+   "versus": "A",
+   "recall_diff": 0.0,
+   "ci": [
+    0.0,
+    0.0
+   ],
+   "paired_cases": 1
+  },
+  {
+   "condition": "C-full",
+   "versus": "A",
+   "recall_diff": 0.0,
+   "ci": [
+    0.0,
+    0.0
+   ],
+   "paired_cases": 1
+  }
+ ],
+ "unsigned_cases_skipped": [],
+ "excluded_runs": [
+  {
+   "run_id": "wp-0001.fixed.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0001.fixed.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0001.vuln.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0001.vuln.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0002.fixed.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0002.fixed.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0002.vuln.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0002.vuln.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0003.fixed.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0003.fixed.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0003.vuln.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0003.vuln.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0004.fixed.A.r1",
+   "experiment": "pilot-1",
+   "reason": "error: success: Credit balance is too low"
+  },
+  {
+   "run_id": "wp-0004.fixed.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0004.fixed.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0004.vuln.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0004.vuln.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0005.fixed.A.r1",
+   "experiment": "pilot-1",
+   "reason": "error: success: Credit balance is too low"
+  },
+  {
+   "run_id": "wp-0005.fixed.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0005.fixed.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0005.vuln.A.r1",
+   "experiment": "pilot-1",
+   "reason": "error: success: Credit balance is too low"
+  },
+  {
+   "run_id": "wp-0005.vuln.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0005.vuln.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0006.fixed.A.r1",
+   "experiment": "pilot-1",
+   "reason": "error: success: Credit balance is too low"
+  },
+  {
+   "run_id": "wp-0006.fixed.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0006.fixed.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0006.vuln.A.r1",
+   "experiment": "pilot-1",
+   "reason": "error: success: Credit balance is too low"
+  },
+  {
+   "run_id": "wp-0006.vuln.B.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  },
+  {
+   "run_id": "wp-0006.vuln.C-full.r1",
+   "experiment": "pilot-1",
+   "reason": "experiment marked INVALID for this condition"
+  }
+ ],
+ "precision_breakdown": {
+  "A": {
+   "matched": 4,
+   "fp": 0,
+   "plausible": 0,
+   "real-but-other": 0,
+   "unlabelled": 17,
+   "not_in_sample": 0
+  },
+  "B": {
+   "matched": 1,
+   "fp": 0,
+   "plausible": 0,
+   "real-but-other": 0,
+   "unlabelled": 8,
+   "not_in_sample": 0
+  },
+  "C-full": {
+   "matched": 1,
+   "fp": 0,
+   "plausible": 0,
+   "real-but-other": 0,
+   "unlabelled": 3,
+   "not_in_sample": 0
+  }
+ },
+ "sheet_sampled": false
+}
