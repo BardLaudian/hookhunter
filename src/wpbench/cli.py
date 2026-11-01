@@ -406,13 +406,14 @@ def score(
     out: Annotated[Path | None, typer.Option(help="Output directory; default results/<first run name>.")] = None,
     seed: Annotated[int, typer.Option(help="Seed for the bootstrap and the sheet sample.")] = 20261101,
     boot: Annotated[int, typer.Option(min=100, help="Bootstrap resamples.")] = 10_000,
+    function_cap: Annotated[int | None, typer.Option(help="Sensitivity: the same-function clause only counts within this many lines (default: SPEC literal, no cap).")] = None,
     dataset: DatasetOpt = DEFAULT_DATASET,
 ) -> None:
     """Score runs against the signed ground truth (local, no API calls): recall, recall@3, false alarms, cost, paired bootstrap CIs."""
     cases = _load(dataset)
     wanted = [c.strip() for c in conditions.split(",") if c.strip()]
     loaded = load_records(run, wanted or None)
-    rows, unsigned = score_records(loaded.records, cases)
+    rows, unsigned = score_records(loaded.records, cases, function_cap)
     if not rows:
         err.print("[yellow]nothing to score[/yellow]")
         raise typer.Exit(1)

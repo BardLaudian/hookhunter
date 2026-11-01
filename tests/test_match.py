@@ -65,3 +65,11 @@ def test_recall_at_3_uses_confidence_not_list_order() -> None:
 def test_no_findings_is_a_miss_not_an_error() -> None:
     s = score_findings([], T)
     assert not s.hit and not s.hit_at_3 and s.unmatched == ()
+
+
+def test_function_cap_stops_a_giant_function_matching_everything() -> None:
+    far = f(line_start=900, line_end=910, function="save_settings")
+    assert match(far, T).matched  # SPEC literal
+    assert not match(far, T, function_cap=100).matched
+    assert match(f(line_start=200, line_end=210, function="save_settings"), T, function_cap=100).matched  # 66 lines away
+    assert match(f(line_start=125, line_end=130, function="other"), T, function_cap=0).matched  # overlap is never capped

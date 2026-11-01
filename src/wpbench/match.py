@@ -51,13 +51,18 @@ def truth_from_case(case: Any) -> Truth:
     return Truth(t["file"], t["function"], int(t["line_start"]), int(t["line_end"]), case.cwe, case.cls)
 
 
-def match(finding: dict[str, Any], truth: Truth, tolerance: int = TOLERANCE) -> MatchResult:
-    """Same file AND (line ranges overlap within the tolerance OR same function name) AND compatible family."""
+def match(finding: dict[str, Any], truth: Truth, tolerance: int = TOLERANCE, function_cap: int | None = None) -> MatchResult:
+    """Same file AND (line ranges overlap within the tolerance OR same function name) AND compatible family.
+
+    ``function_cap`` (off by default, SPEC literal) limits the function clause to findings within that many lines of the truth, so a
+    giant dispatcher function does not match every finding inside it (docs/DECISIONS.md section 16).
+    """
     same_file = norm_path(finding.get("file", "")) == norm_path(truth.file)
     lo, hi = sorted((int(finding.get("line_start", 0)), int(finding.get("line_end", 0))))
     overlap = lo - tolerance <= truth.line_end and hi + tolerance >= truth.line_start
     fn_f, fn_t = norm_function(finding.get("function", "")), norm_function(truth.function)
-    location = overlap or (bool(fn_f) and fn_f == fn_t)
+    gap = max(truth.line_start - hi, lo - truth.line_end, 0)
+    location = overlap or (bool(fn_f) and fn_f == fn_t and (function_cap is None or gap <= function_cap))
     fam = compatible(str(finding.get("cwe", "")), finding.get("class"), truth.cwe, truth.cls)
     return MatchResult(same_file and location and fam, same_file, location, fam)
 
@@ -75,8 +80,8 @@ class RunScore:
     unmatched: tuple[int, ...]
 
 
-def score_findings(findings: Sequence[dict[str, Any]], truth: Truth) -> RunScore:
-    flags = [match(f, truth).matched for f in findings]
+def score_findings(findings: Sequence[dict[str, Any]], truth: Truth, function_cap: int | None = None) -> RunScore:
+    flags = [match(f, truth, function_cap=function_cap).matched for f in findings]
     top3 = ranked(findings)[:3]
     ids = {id(f) for f in top3}
     at3 = any(flags[i] for i, f in enumerate(findings) if id(f) in ids)

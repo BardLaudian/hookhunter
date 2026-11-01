@@ -60,7 +60,7 @@ def load_records(run_dirs: Sequence[Path], conditions: Sequence[str] | None = No
     return out
 
 
-def score_records(records: Sequence[dict[str, Any]], cases: Sequence[Case]) -> tuple[list[dict[str, Any]], list[str]]:
+def score_records(records: Sequence[dict[str, Any]], cases: Sequence[Case], function_cap: int | None = None) -> tuple[list[dict[str, Any]], list[str]]:
     """One row per run with its hit flags. Returns (rows, ids of cases skipped for lack of a signed label)."""
     by_id = {c.id: c for c in cases}
     rows: list[dict[str, Any]] = []
@@ -71,7 +71,7 @@ def score_records(records: Sequence[dict[str, Any]], cases: Sequence[Case]) -> t
             unsigned.add(rec["case_id"])
             continue
         findings = rec.get("findings") or []
-        s = score_findings(findings, truth_from_case(case))
+        s = score_findings(findings, truth_from_case(case), function_cap)
         rows.append({
             "run_id": rec["run_id"], "experiment": rec["experiment"], "case_id": rec["case_id"], "version": rec["version"], "condition": rec["condition"],
             "repeat": rec["repeat"], "status": rec["status"], "n_findings": len(findings), "hit": s.hit, "hit_at_3": s.hit_at_3,
