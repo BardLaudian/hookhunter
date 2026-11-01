@@ -11,7 +11,15 @@ risk:
   unguarded - a variable or user-influenced value reaches the sink and nothing in the
               arguments (or, for rules that depend on a prior check, the function) neutralises it
   guarded   - an escaper / prepare() / validator / capability check accounts for it
-  constant  - no variable reaches the sink (hidden unless --risk constant)
+  constant  - no variable reaches the sink (hidden unless --risk constant). For the dispatch rules
+              (callee, class or callable chosen by a variable) it means no request-derived value
+              was found in the function: see "request taint" below.
+
+Request taint (dispatch rules only): a value counts as request-derived if it contains a
+superglobal, a REST request accessor, php://input or a stored-option read, or a variable assigned
+from such an expression earlier in the same function. A value read out of a server-side array
+(`$handlers[ $_POST['op'] ]`) is not tainted: the key is chosen, the value is not. This is a
+heuristic over one function; it does not follow parameters, properties or other functions.
 A "guarded" sink is a hint, not proof: check the guard fits the sink's context.
 Static analysis only; nothing is executed or fetched.
 """
@@ -23,12 +31,13 @@ import json
 import re
 import sys
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _php import Call, Func, Index, build_index  # noqa: E402
+from _php import DYNAMIC, NEW_DYNAMIC, SUPERGLOBALS_RE, Call, Func, Index, build_index  # noqa: E402
 
 VAR_RE = re.compile(r"(?<![\\\w])\$[A-Za-z_]\w*")
 GETTER_RE = re.compile(r"\b(?:get_option|get_post_meta|get_user_meta|get_term_meta|get_transient|get_site_option|get_query_var|get_the_title|get_comment_text)\s*\(")
@@ -64,6 +73,7 @@ class Rule:
     args_safe: str = ""  # regex over the whole argument text that makes the call safe
     risky_if: str = ""  # regex over the arguments: without it the call is safe by default
     needs_var: bool = True
+    taint_only: bool = False  # flag only when the inspected value is request-derived (see "request taint")
     always_guarded: bool = False
     getters: bool = False  # treat get_option()-style reads as user-influenced values
     custom: str = ""
@@ -105,8 +115,17 @@ RULES: tuple[Rule, ...] = (
        arg_guards=r"wp_validate_redirect|home_url|admin_url|site_url", func_guard=r"\b(?:wp_validate_redirect|in_array)\s*\(",
        hint="open redirect via Location header"),
     _r("safe-redirect", "open-redirect", "wp_safe_redirect", always_guarded=True, hint="wp_safe_redirect() restricts the host"),
-    _r("user-write", "privesc", "wp_update_user,wp_insert_user,update_user_meta,add_user_meta,wp_set_current_user,wp_set_auth_cookie",
+    _r("user-write", "privesc", "wp_update_user,wp_insert_user,update_user_meta,add_user_meta",
        arg_guards="absint|intval", func_guard=CAP_FUNC_GUARD, hint="needs a capability check and a role allow-list"),
+    _r("account-control", "privesc",
+       "wp_set_current_user,wp_set_auth_cookie,wp_set_password,reset_password,wp_signon,wp_create_user,add_user_to_blog,"
+       "add_existing_user_to_blog,remove_user_from_blog,grant_super_admin,revoke_super_admin",
+       func_guard=CAP_FUNC_GUARD, hint="logs in, creates, re-passwords or promotes an account; casting the id does not authorise the caller"),
+    _r("privileged-option", "privesc,authz", "update_option,add_option,update_site_option", needs_var=False, func_guard=CAP_FUNC_GUARD,
+       arg_match=(0, r"""(?i)^['"](?:default_role|users_can_register|admin_email|siteurl|home|active_plugins|template|stylesheet)['"]$|user_roles['"]?\s*$"""),
+       hint="option that controls who can register, what roles can do, or which code loads"),
+    _r("option-name", "privesc,authz", "update_option,add_option,update_site_option", arg_idx=0, func_guard=CAP_FUNC_GUARD,
+       hint="the request chooses which option is written (default_role, user_roles and similar are options)"),
     _r("role-change", "privesc", "set_role,add_role,add_cap,remove_cap", kinds=("method", "func"), func_guard=CAP_FUNC_GUARD,
        hint="role/capability change"),
     _r("option-write", "authz,privesc", "update_option,add_option,delete_option,update_site_option", arg_guards="absint|intval",
@@ -123,6 +142,23 @@ RULES: tuple[Rule, ...] = (
        hint="debug information"),
     _r("user-data", "info-disclosure", "get_users,get_userdata,get_user_by,get_user_meta", needs_var=False,
        func_guard=CAP_FUNC_GUARD, hint="who may read this user data? (exposure depends on where the result goes)"),
+    _r("url-fetch", "ssrf", "curl_init,download_url,media_sideload_image,fetch_feed,wp_oembed_get,wp_remote_fopen", arg_idx=0,
+       arg_guards="wp_http_validate_url", func_guard=r"\b(?:wp_http_validate_url|in_array)\s*\(", hint="fetches the URL given as first argument; see the http-request rules"),
+    _r("soap-client", "ssrf", "soapclient", kinds=("new",), arg_idx=0, arg_guards="wp_http_validate_url",
+       func_guard=r"\b(?:wp_http_validate_url|in_array)\s*\(", hint="fetches the WSDL URL"),
+    _r("dynamic-callee", "rce", DYNAMIC, kinds=("dynamic",), taint_only=True, needs_var=False, func_guard=r"\b(?:in_array|array_key_exists)\s*\(",
+       hint="function or method chosen by the request: call from a fixed map keyed by a validated string"),
+    _r("dynamic-class", "rce", NEW_DYNAMIC, kinds=("new",), taint_only=True, needs_var=False, func_guard=r"\b(?:in_array|array_key_exists)\s*\(",
+       hint="class chosen by the request"),
+    _r("callable-param", "rce", "array_map,register_shutdown_function,spl_autoload_register", arg_idx=0, taint_only=True, needs_var=False,
+       func_guard=r"\b(?:in_array|array_key_exists)\s*\(", hint="callable chosen by the request runs on the data"),
+    _r("callable-param", "rce", "array_filter,array_walk,array_walk_recursive,array_reduce,usort,uasort,uksort,preg_replace_callback,add_action,add_filter",
+       arg_idx=1, taint_only=True, needs_var=False, func_guard=r"\b(?:in_array|array_key_exists)\s*\(", hint="callable chosen by the request runs on the data"),
+    _r("hook-dispatch", "rce", "do_action,apply_filters,do_action_ref_array,apply_filters_ref_array,do_shortcode", arg_idx=0, taint_only=True,
+       needs_var=False, func_guard=r"\b(?:in_array|array_key_exists)\s*\(",
+       hint="runs every callback registered on a request-chosen hook name, or every shortcode found in request content"),
+    _r("parse-str", "rce", "parse_str", max_args=1, hint="without a result array it creates variables named by the request (removed in PHP 8)"),
+    _r("mail-params", "rce", "mail", arg_idx=4, arg_guards=SHELL_GUARDS, hint="fifth argument goes to the mail program; escapeshellcmd inside mail() still allows extra options"),
     _r("xml-load", "xxe", "simplexml_load_string,simplexml_load_file,loadxml", kinds=("func", "method"),
        risky_if=r"LIBXML_(?:NOENT|DTDLOAD|DTDATTR)", hint="XXE only when LIBXML_NOENT/DTDLOAD are set (or PHP < 8 without libxml_disable_entity_loader)"),
 )
@@ -131,6 +167,53 @@ _BY_NAME: dict[str, list[Rule]] = {}
 for _rule in RULES:
     for _n in _rule.names:
         _BY_NAME.setdefault(_n, []).append(_rule)
+
+
+REQUEST_SOURCE_RE = re.compile(
+    SUPERGLOBALS_RE.pattern
+    + r"|->get_(?:param|params|json_params|body|body_params|query_params|url_params|file_params|header|headers)\s*\(|php://input")
+_ASSIGN_RE = re.compile(r"(\$[A-Za-z_]\w*)\s*(?:\.|\?\?|\+|-|\*)?=(?![=>])\s*(.+?)\s*;", re.S)
+_FOREACH_RE = re.compile(r"foreach\s*\(\s*(.+?)\s+as\s+(?:(\$[A-Za-z_]\w*)\s*=>\s*)?(\$[A-Za-z_]\w*)", re.S)
+_LOOKUP_BASE_RE = re.compile(r"\s*(\$[A-Za-z_]\w*(?:->\w+)*)\s*\[")
+
+
+def _lookup_parts(expr: str) -> tuple[str, str] | None:
+    """For `$base[ ... ] ?? rest` return (base, rest); None if the expression is not an array lookup."""
+    m = _LOOKUP_BASE_RE.match(expr)
+    if not m:
+        return None
+    depth, i = 1, m.end()
+    while i < len(expr) and depth:
+        depth += {"[": 1, "]": -1}.get(expr[i], 0)
+        i += 1
+    if depth:
+        return None
+    rest = expr[i:].strip()
+    if rest and not rest.startswith("??"):
+        return None
+    return m.group(1), rest[2:].strip()
+
+
+def _is_tainted(expr: str, tainted: frozenset[str]) -> bool:
+    lookup = _lookup_parts(expr)
+    if lookup and not REQUEST_SOURCE_RE.match(lookup[0]):
+        base, rest = lookup
+        return base in tainted or (bool(rest) and _is_tainted(rest, tainted))
+    return bool(REQUEST_SOURCE_RE.search(expr) or GETTER_RE.search(expr) or any(v in tainted for v in VAR_RE.findall(expr)))
+
+
+@lru_cache(maxsize=1024)
+def tainted_vars(body: str) -> frozenset[str]:
+    """Variables assigned, directly or through other variables, from request-derived expressions in this function."""
+    assigns = [(m.group(1), m.group(2)) for m in _ASSIGN_RE.finditer(body)]
+    for m in _FOREACH_RE.finditer(body):
+        assigns += [(v, m.group(1)) for v in (m.group(2), m.group(3)) if v]
+    tainted: frozenset[str] = frozenset()
+    while True:
+        grown = tainted | {var for var, rhs in assigns if var not in tainted and _is_tainted(rhs, tainted)}
+        if grown == tainted:
+            return tainted
+        tainted = grown
 
 
 def _blank_single_quoted(text: str) -> str:
@@ -191,6 +274,14 @@ def _assess(rule: Rule, call: Call, func: Func | None) -> tuple[str, list[str]]:
     in_args = [g.lstrip("->") for g in in_args]
     if rule.always_guarded:
         return "guarded", in_args
+    if rule.taint_only:
+        values = [call.recv] if call.kind in ("dynamic",) or call.name == NEW_DYNAMIC else target
+        tv = tainted_vars(func.body) if func else frozenset()
+        if not any(_is_tainted(v, tv) for v in values):
+            return "constant", in_args
+        if rule.func_guard and func and re.search(rule.func_guard, func.body):
+            return "guarded", in_args
+        return "unguarded", in_args
     if rule.custom == "prepare":
         first = args[0] if args else ""
         if re.fullmatch(r"\s*\$\w+\s*", first):

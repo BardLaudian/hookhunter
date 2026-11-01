@@ -255,9 +255,13 @@ def vector(metrics: dict | None) -> tuple[str, float] | None:
     return f"CVSS:3.1/AV:N/AC:{m['AC']}/PR:{m['PR']}/UI:{m['UI']}/S:{m['S']}/C:{m['C']}/I:{m['I']}/A:{m['A']}", score
 
 
+# Fixtures added after the dry run, to test the scripts only (dispatch, URL fetching, account functions). The dry run covers the other 26.
+SCRIPT_ONLY = frozenset({"dynamic-call-vuln", "dynamic-call-safe", "url-fetch-vuln", "url-fetch-safe", "account-vuln", "account-safe"})
+
+
 def build() -> dict:
     out: dict[str, list[dict]] = {}
-    for d in sorted(p.name for p in FIXTURES.iterdir()):
+    for d in sorted(p.name for p in FIXTURES.iterdir() if p.name not in SCRIPT_ONLY):
         items = []
         for f in ANALYSIS.get(d, {}).get("findings", []):
             line = locate(d, f["sel"])

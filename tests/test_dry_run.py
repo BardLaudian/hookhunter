@@ -28,7 +28,7 @@ FAMILY = {
 }
 FIXTURE_FAMILY = {"xss": "xss", "sqli": "sqli", "authz": "authz", "csrf": "csrf", "file-ops": "file", "object-injection": "object-injection",
                   "ssrf": "ssrf", "open-redirect": "open-redirect", "privesc": "privesc", "rce": "rce", "info-disclosure": "info-disclosure", "xxe": "xxe"}
-NAMES = sorted(p.name for p in FIXTURES.iterdir())
+NAMES = sorted(p.name for p in FIXTURES.iterdir() if p.name not in dry.SCRIPT_ONLY)
 VULN = [n for n in NAMES if n.endswith("-vuln")]
 SAFE = [n for n in NAMES if n.endswith("-safe")]
 

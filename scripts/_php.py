@@ -28,6 +28,9 @@ NOT_CALLS = frozenset(
     {"if", "elseif", "while", "for", "foreach", "switch", "catch", "function", "fn", "array",
      "list", "isset", "empty", "unset", "declare", "match", "use", "and", "or", "return"}
 )
+# Name given to calls whose callee is an expression, not an identifier: $fn(), $o->$m(), A::$m(), new $class().
+DYNAMIC = "<dynamic>"
+NEW_DYNAMIC = "<new-dynamic>"
 SUPERGLOBALS_RE = re.compile(r"\$_(?:GET|POST|REQUEST|COOKIE|SERVER|FILES)\b")
 
 
@@ -48,9 +51,9 @@ class Func:
 
 @dataclass
 class Call:
-    name: str  # lower-cased callee; language constructs use echo/print/include/...
-    kind: str  # func | method | static | new | construct
-    recv: str  # receiver source for method/static calls
+    name: str  # lower-cased callee; language constructs use echo/print/include/...; DYNAMIC / NEW_DYNAMIC when the callee is an expression
+    kind: str  # func | method | static | new | construct | dynamic
+    recv: str  # receiver source for method/static calls; the callee expression for dynamic calls
     args: tuple[str, ...]
     file: str
     line: int
@@ -294,23 +297,33 @@ def _parse_treesitter(parser: Any, src: bytes, rel: str) -> tuple[list[Func], li
                 name = _text(src, fn).lstrip("\\").rsplit("\\", 1)[-1]
                 if name.lower() not in NOT_CALLS:
                     add(name, "func", "", _ts_args(src, args), node, fi)
+            elif fn is not None and args is not None and fn.type != "parenthesized_expression":
+                add(DYNAMIC, "dynamic", _norm(_text(src, fn)), _ts_args(src, args), node, fi)  # $fn(), $_GET['f'](), $this->cb[0]()
         elif t in ("member_call_expression", "nullsafe_member_call_expression"):
             nm = node.child_by_field_name("name")
             args = node.child_by_field_name("arguments")
             obj = node.child_by_field_name("object")
             if nm is not None and args is not None and nm.type == "name":
                 add(_text(src, nm), "method", _norm(_text(src, obj)) if obj is not None else "", _ts_args(src, args), node, fi)
+            elif nm is not None and args is not None and obj is not None:
+                add(DYNAMIC, "dynamic", _norm(f"{_text(src, obj)}->{_text(src, nm)}"), _ts_args(src, args), node, fi)  # $o->$method()
         elif t == "scoped_call_expression":
             nm = node.child_by_field_name("name")
             args = node.child_by_field_name("arguments")
             scope = node.child_by_field_name("scope")
             if nm is not None and args is not None and nm.type == "name":
                 add(_text(src, nm), "static", _norm(_text(src, scope)) if scope is not None else "", _ts_args(src, args), node, fi)
+            elif nm is not None and args is not None and scope is not None:
+                add(DYNAMIC, "dynamic", _norm(f"{_text(src, scope)}::{_text(src, nm)}"), _ts_args(src, args), node, fi)  # A::$method()
         elif t == "object_creation_expression":
             nm = next((c for c in node.named_children if c.type in ("name", "qualified_name")), None)
             args = node.child_by_field_name("arguments") or next((c for c in node.named_children if c.type == "arguments"), None)
             if nm is not None:
                 add(_text(src, nm).lstrip("\\"), "new", "", _ts_args(src, args) if args is not None else (), node, fi)
+            else:
+                cls_node = next((c for c in node.named_children if c.type in ("variable_name", "dynamic_variable_name", "member_access_expression", "subscript_expression")), None)
+                if cls_node is not None:
+                    add(NEW_DYNAMIC, "new", _norm(_text(src, cls_node)), _ts_args(src, args) if args is not None else (), node, fi)  # new $class()
         elif t == "echo_statement":
             exprs = [e for c in node.named_children for e in _flatten_sequence(c)]
             add("echo", "construct", "", tuple(_text(src, e).strip() for e in exprs), node, fi)
@@ -430,6 +443,10 @@ def _match_brackets(skel: str) -> dict[int, int]:
 
 def _receiver(skel: str, code: str, end: int, pairs: dict[int, int]) -> str:
     """Source text of the expression to the left of ``->``/``::`` ending at ``end``."""
+    return _norm(code[_receiver_start(skel, end, pairs) : end])
+
+
+def _receiver_start(skel: str, end: int, pairs: dict[int, int]) -> int:
     i = end
     while True:
         while i > 0 and skel[i - 1] in " \t\r\n":
@@ -452,7 +469,7 @@ def _receiver(skel: str, code: str, end: int, pairs: dict[int, int]) -> str:
                 i -= 1
             continue
         break
-    return _norm(code[i:end])
+    return i
 
 
 def _parse_regex(src_bytes: bytes, rel: str) -> tuple[list[Func], list[Call]]:
@@ -523,6 +540,26 @@ def _parse_regex(src_bytes: bytes, rel: str) -> tuple[list[Func], list[Call]]:
             mk(m.start("name"), base, "new", "", args, pairs[op])
         else:
             mk(m.start("name"), base, "func", "", args, pairs[op])
+
+    # Calls whose callee is an expression: `$fn(`, `$_GET['f'](`, `$o->$m(`, `A::$m(`, `$this->cb[0](`, `new $cls(`.
+    for op in (m.start() for m in re.finditer(r"\(", skel)):
+        if op not in pairs:
+            continue
+        k = op
+        while k > 0 and skel[k - 1] in " \t\r\n":
+            k -= 1
+        if k == 0 or not (skel[k - 1] == "]" or skel[k - 1].isalnum() or skel[k - 1] in "_$\\"):
+            continue
+        start = _receiver_start(skel, k, pairs)
+        callee = _norm(code[start:k])
+        last = callee.split("->")[-1].split("::")[-1].split("[")[0]
+        token = bool(re.match(r"\$+[A-Za-z_]\w*", last))  # the callee ends in a variable, not in a plain name
+        if skel[k - 1] != "]" and not token:
+            continue  # a plain name: handled by the named-call scan
+        if re.search(r"(?<![\w$])new[ \t\r\n]+$", skel[:start]):
+            mk(start, NEW_DYNAMIC, "new", callee, split_args(code[op + 1 : pairs[op]]), pairs[op])
+        elif not re.search(r"(?<![\w$])function[ \t\r\n]*&?[ \t\r\n]*$", skel[:start]):
+            mk(start, DYNAMIC, "dynamic", callee, split_args(code[op + 1 : pairs[op]]), pairs[op])
 
     for m in _CONSTRUCT_RE.finditer(skel):
         kw = "echo" if m.group("kw").startswith("\x01") else m.group("kw")
