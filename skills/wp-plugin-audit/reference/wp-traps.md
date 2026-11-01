@@ -61,6 +61,7 @@ a logic consequence of the code rather than something core documents, or *(PHP)*
   and Subscriber/Customer-level reports and list "Contributor-level (or higher) stored XSS" as out of
   scope; Wordfence reportedly treats `PR:H` reports, including Administrator and `unfiltered_html`
   roles, as outside its bounty (not verified at source; see `classes/authz.md`, "What triagers reject").
+  WPScan's submission page says admins and editors may use JavaScript in posts, pages and comments, so the `unfiltered_html` capability "should be disallowed when testing for Stored XSS using such roles".
   A multisite-only exception is not documented in anything read for this skill.
 
 ### 7. `nopriv` versus logged-in dispatch

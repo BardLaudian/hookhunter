@@ -139,6 +139,7 @@ Patchstack Alliance rules (read in full, 2026-11-01):
 - Out of scope: "Contributor-level (or higher) stored XSS"; "HTML-only injection without JavaScript execution – e.g. injection into emails or rendered output where script execution is not possible"; "CSS injection"; "Authenticated shortcode issues without sensitive data disclosure"; any report with Attack Complexity High.
 - Only unauthenticated or Subscriber/Customer exploitation is eligible, so stored XSS written by anyone with more capabilities is excluded.
 - Reports on components with fewer than 1,000 active installs are outside the programme (except under mVDP).
+- WPScan's submission page tells testers to disallow `unfiltered_html` when testing stored XSS with administrator or editor roles, since those roles may use JavaScript in content.
 
 Wordfence's scope could not be read (empty response to automated fetches); see `authz.md` section 7. The reasoning about
 `unfiltered_html` in `wp-traps.md` trap 6 explains why administrator-written stored XSS is usually weak.
