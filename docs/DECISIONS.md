@@ -151,3 +151,8 @@ Not searched: other WordPress audit skills (only one search done). Do that befor
 - `docs/SPEC.md` said that for conditions B and C the skill is copied to `.claude/skills/wp-plugin-triage/`; that is only right for B. It now says `.claude/skills/<skill-name>/` with both names.
 - The activation results recorded before the rename (dev 6/8 then 8/8, held-out 8/8, 0 false triggers) were produced under the previous name; those result files were removed from the working tree and remain in git
   history at commit `0b74cf0`, the last one with the previous name. The evals were rerun under the new name (section 12).
+
+## 12. Activation evals rerun under the new name (2026-11-01)
+
+Same 32 prompts, same runner, no change to the description between the earlier runs and these. Dev split: 8 of 8 positives, 0 of 9 false triggers. Held-out split (second use, as a rename
+regression check and not for tuning): 8 of 8 positives, 0 of 7 false triggers. Cost about 0.57 USD. Results: `skills/hookhunter/tests/evals/results-dev.json` and `results-heldout.json`.
