@@ -15,7 +15,7 @@ from wpbench.execute import (
     parse_stream,
     run_one,
 )
-from wpbench.runplan import ContainerSpec, Run
+from wpbench.runplan import CONDITIONS, ContainerSpec, Run
 
 SCHEMA = json.loads((Path(__file__).parent.parent / "schemas" / "findings.schema.json").read_text())
 GOOD = {
@@ -134,3 +134,36 @@ def test_resume_skips_finished_runs_and_budget_stops(tmp_path: Path) -> None:
     out = execute(plan, ctx, max_total_usd=1, runner=fake_runner(stream(), calls))
     assert out["ran"] == 1 and out["skipped"] == 2 and len(calls) == 1
     assert existing_record(ctx.exp_dir, plan[0])
+
+
+def guard(command: str) -> int:
+    import sys
+
+    path = Path(__file__).parent.parent / "src" / "wpbench" / "data" / "bash_guard.py"
+    payload = json.dumps({"tool_input": {"command": command}})
+    return subprocess.run([sys.executable, str(path)], input=payload, text=True, capture_output=True, check=False).returncode
+
+
+def test_bash_guard_lets_only_the_skill_scripts_through() -> None:
+    assert guard("python3 .claude/skills/hookhunter/scripts/wp_map.py --top 5 plugin") == 0
+    for bad in (
+        "ls /tmp", "grep -c function plugin/a.php", "cat plugin/a.php", "python3 -c 'print(1)'",
+        "python3 .claude/skills/hookhunter/scripts/wp_map.py plugin; ls", "python3 .claude/skills/hookhunter/scripts/wp_map.py plugin && id",
+        "python3 .claude/skills/hookhunter/scripts/wp_map.py $(id)", "python3 .claude/skills/hookhunter/scripts/../../x.py",
+        "python3 .claude/skills/wp-plugin-triage/scripts/x.py", "cd /work && python3 .claude/skills/hookhunter/scripts/wp_map.py plugin", "",
+    ):
+        assert guard(bad) == 2, bad
+
+
+def test_only_c_full_gets_the_guard_settings(tmp_path: Path) -> None:
+    skill = make_skill(tmp_path)
+    skills = {"hookhunter": skill, "wp-plugin-triage": skill}
+    from wpbench.execute import stage
+
+    base = stage(Run("wp-0001", "vuln", "C-full", 1), CONDITIONS["C-full"], skills, tmp_path / "e")
+    assert (base / "work" / ".claude" / "bash_guard.py").exists()
+    hook = json.loads((base / "work" / ".claude" / "settings.json").read_text())["hooks"]["PreToolUse"][0]
+    assert hook["matcher"] == "Bash"
+    for name in ("A", "B", "C-min", "C-noscripts"):
+        other = stage(Run("wp-0001", "vuln", name, 1), CONDITIONS[name], skills, tmp_path / "e")
+        assert not (other / "work" / ".claude" / "settings.json").exists()

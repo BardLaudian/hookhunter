@@ -31,10 +31,13 @@ class Condition:
 
     @property
     def tools(self) -> tuple[str, ...]:
-        return (*BASE_TOOLS, "Bash") if self.bash_scripts else BASE_TOOLS
+        # The Skill tool must be present or the model cannot load the skill (pilot-1 lost B and C that way).
+        return (*BASE_TOOLS, *(("Skill",) if self.skill else ()), *(("Bash",) if self.bash_scripts else ()))
 
     def allowed_tools(self) -> list[str]:
         allowed = list(BASE_TOOLS)
+        if self.skill:
+            allowed.append(f"Skill({self.skill})")  # other bundled skills stay unapproved, hence denied in headless mode
         if self.bash_scripts and self.skill:
             allowed.append(f"Bash(python3 .claude/skills/{self.skill}/scripts/*)")
         return allowed
@@ -63,7 +66,9 @@ class Price:
 
 
 # Source: Claude API model table cached 2026-10-06 (Sonnet 5.5: $2 / $10, cache reads $0.20; 5 minute cache write = 1.25 x input).
-PRICES: dict[str, Price] = {"claude-sonnet-5-5": Price(2.0, 10.0, 0.20, 2.50)}
+# Haiku 5.5: $0.10 / $0.50 up to 100k-token prompts, $0.50 / $2.50 beyond; agent contexts are mostly beyond, so the higher tier is
+# used. Cache rates are not in the model table: assumed 10 % (read) and 125 % (write) of input, as for Sonnet. Real cost comes from the run.
+PRICES: dict[str, Price] = {"claude-sonnet-5-5": Price(2.0, 10.0, 0.20, 2.50), "claude-haiku-5-5": Price(0.50, 2.50, 0.05, 0.625)}
 
 
 @dataclass(frozen=True)

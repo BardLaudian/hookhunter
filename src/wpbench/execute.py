@@ -60,7 +60,18 @@ def stage(run: Run, cond: Condition, skill_dirs: dict[str, Path], exp_dir: Path)
     out.chmod(0o777)  # the container user (uid 1000) must be able to write /out
     if cond.skill:
         copy_skill(skill_dirs[cond.skill], work / ".claude" / "skills" / cond.skill, cond.parts)
+    if cond.bash_scripts:
+        install_bash_guard(work)
     return base
+
+
+def install_bash_guard(work: Path) -> None:
+    """Project settings with a PreToolUse hook that restricts Bash to the skill's scripts."""
+    claude = work / ".claude"
+    claude.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(Path(__file__).parent / "data" / "bash_guard.py", claude / "bash_guard.py")
+    settings = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": 'python3 "$CLAUDE_PROJECT_DIR/.claude/bash_guard.py"'}]}]}}
+    (claude / "settings.json").write_text(json.dumps(settings, indent=1), encoding="utf-8")
 
 
 @dataclass

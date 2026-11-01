@@ -41,6 +41,14 @@ def test_a_has_no_bash_and_only_c_full_gets_scoped_bash() -> None:
     assert CONDITIONS["C-full"].allowed_tools()[-1] == "Bash(python3 .claude/skills/hookhunter/scripts/*)"
 
 
+def test_conditions_with_a_skill_can_call_the_skill_tool() -> None:
+    # pilot-1 lost conditions B and C because --tools Read,Grep,Glob removed the Skill tool
+    assert "Skill" not in CONDITIONS["A"].tools
+    for name in ("B", "C-full", "C-min", "C-noscripts"):
+        cond = CONDITIONS[name]
+        assert "Skill" in cond.tools and f"Skill({cond.skill})" in cond.allowed_tools()
+
+
 def test_claude_args_isolate_the_run() -> None:
     args = claude_args(CONDITIONS["A"], "claude-sonnet-5-5", 3, "p")
     assert args[args.index("--tools") + 1] == "Read,Grep,Glob"
