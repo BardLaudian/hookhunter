@@ -1,0 +1,2 @@
+# One [[case]] per CVE in one plugin. Schema and labelling protocol: docs/DATASET.md. Validate with `wpbench validate`.
+# A label ([case.truth]) without reviewed_by and reviewed_on is not used for any metric. No plugin source is stored here.

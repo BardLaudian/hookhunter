@@ -1,22 +1,42 @@
-# Tool configuration only for now; the wpbench package metadata arrives in Phase 1.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wpbench"
+version = "0.1.0"
+description = "Benchmark that measures whether an AI agent skill helps find vulnerabilities in WordPress plugins."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["typer>=0.12", "rich>=13"]
+
+[project.optional-dependencies]
+dev = ["pytest>=9", "ruff>=0.17", "mypy>=2.4", "jsonschema>=4.26", "pyyaml>=6", "tree-sitter==0.26.0", "tree-sitter-php==0.25.1"]
+
+[project.scripts]
+wpbench = "wpbench.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wpbench"]
+
 [tool.pytest.ini_options]
-testpaths = ["skills/hookhunter/tests"]
-pythonpath = ["skills/hookhunter/scripts"]
+testpaths = ["tests", "skills/hookhunter/tests"]
+pythonpath = ["src", "skills/hookhunter/scripts"]
 addopts = "-q"
 markers = ["network: fetches external URLs; enabled with WPBENCH_CHECK_URLS=1"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 extend-exclude = [".venv", "skills/hookhunter/tests/fixtures"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-# The sink rule table and regexes are intentionally dense one-liners.
+# The sink rule table and regexes in the skill scripts are intentionally dense one-liners.
 ignore = ["E501"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 ignore_missing_imports = true
-mypy_path = "skills/hookhunter/scripts"
+mypy_path = "src:skills/hookhunter/scripts"
 explicit_package_bases = true

@@ -164,3 +164,21 @@ Added to `wp_sinks.py` and the parser: calls whose callee is an expression (`$fn
 heuristic (documented in the script's help and in `reference/classes/rce.md`) so that internal callbacks are not reported. `wp_set_current_user` and `wp_set_auth_cookie` moved from `user-write` to
 `account-control` because a cast of the user id was wrongly treated as a guard. Three fixture pairs (`dynamic-call`, `url-fetch`, `account`) with tests for both backends; the dry run still covers the
 original 26 fixtures. Performance on the 1,000-file tree is unchanged in practice (4.8 s regex, 2.7 s tree-sitter for `wp_sinks.py`).
+
+## 14. Phase 1: scaffold and dataset tooling
+
+- **Package.** `src/wpbench/` (hatchling, Python 3.11+, typer and rich) with `vocab.py` (closed vocabularies), `cases.py` (parser and validator), `fetch.py`, `diff.py`, `split.py`, `cli.py`. The vocabularies
+  are duplicated from `schemas/findings.schema.json` on purpose and a test fails if they drift.
+- **Validator strictness.** Errors: malformed id (`wp-NNNN`), CVE (`CVE-YYYY-NNNN+`), CWE, slug, versions, dates, https `source_url`, source outside wordfence/wpscan/patchstack/nvd, class or auth outside the vocabularies,
+  duplicate ids or CVE-in-plugin pairs, `fixed_version` equal to `vuln_version`, malformed hashes, bad truth ranges or paths. Warnings: hash not recorded yet, unsigned label (excluded from metrics), unexpected fields,
+  notes over five lines. `after_cutoff` is only checked for type: the model and its cutoff are not decided (Phase 0 question 2), so no date rule is hard-coded.
+- **fetch.** Builds `https://downloads.wordpress.org/plugin/<slug>.<version>.zip` (verified in Phase 0), refuses a release with no recorded SHA-256 unless `--allow-unhashed` (it then prints the hash for the maintainer to
+  review and record), refuses and unpacks nothing on a mismatch, and writes a marker so repeated fetches are cached. Unpacking rejects absolute or non-portable names, `..`, symbolic links, more than 50,000 entries or more than
+  400 MB, strips a single top-level folder, and does not restore file modes. The zip itself is not kept.
+- **Not enforced yet:** the rule "never run on the latest version of a plugin" needs a live check against the plugin API; it belongs to case selection in Phase 2 (`api.wordpress.org/plugins/info/1.2/`).
+- **diff.** PHP files only (`.php`, `.inc`, `.phtml`), line endings normalised, warns above about 300 changed lines. Advisory text is read from `dataset/advisories/<id>.md` (to be saved by the maintainer; `docs/DATASET.md`
+  did not say where it comes from).
+- **split.** Stratified by class, per-class shuffle seeded with `seed:class`, remainders to the largest fractional share, independent of input order. It writes `split` into `cases.toml` in place (comments and layout kept) and the
+  seed into `dataset/splits.toml`, and refuses to touch a dataset that already has assignments unless `--force`, because the test split is frozen once committed. `wpbench validate` cross-checks the two files.
+- **Tests.** `tests/` (68 tests for the package, 521 in the whole suite) use a fake zip and an injected downloader: no network. Shared helpers live in `tests/helpers.py` rather than a `conftest.py` because the skill's tests import their own
+  `conftest`; the module `test_cli.py` of the package is named `test_wpbench_cli.py` for the same reason.
