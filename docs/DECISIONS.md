@@ -96,3 +96,19 @@ Not searched: other WordPress audit skills (only one search done). Do that befor
 2. Model for the experiment: Sonnet 5.5 (cheapest 5.x) or a stronger one?
 3. Wordfence v3 key: are you willing to create one (and read its terms) before Phase 2?
 4. `docs/v0.2.1/` and `docs/v0.3/` describe a different project (ghostrules). Move or ignore?
+
+## 9. Decisions taken while writing `reference/` (S2)
+
+- **Sources.** Reference files cite public documentation only. WordPress core behaviour was read from `trunk` on 2026-11-01 and each file says so;
+  re-check a point against the plugin's supported core version before relying on it.
+- **Wordfence scope not verified.** `wordfence.com/threat-intel/bug-bounty-program/` returned an empty HTTP 202 to every automated fetch, so Wordfence rules appear
+  only as unverified summaries. Patchstack's Alliance rules were read in full and are quoted. Revisit if the page becomes readable.
+- **Report versus find.** The reference files describe what bounty programmes accept (for example Patchstack: open redirect "inherently out of scope",
+  SSRF only with concrete impact). That guidance belongs to `audit` mode reports. In `bench` mode the skill reports every finding in the class list
+  of `docs/SPEC.md` it can support with evidence, whether or not a programme would accept it, because ground truth comes from patched CVEs.
+  To be reflected in `SKILL.md` (S3).
+- **CVSS tables.** All scores in the class files were computed with the FIRST v3.1 base formula (checked against known values 9.8, 9.9, 8.8, 7.5),
+  not copied from advisories.
+- **Open items.** `wp_sinks.py` does not yet cover: `wp_create_user`, `wp_set_password`, `add_user_to_blog`, `grant_super_admin`, variable function calls,
+  callable parameters (`array_map`, `usort`, …), `do_shortcode`/`do_action` with variable names, `curl_init( $url )`, `download_url`,
+  `media_sideload_image`. The reference files list these as Grep tasks; extend the script before the S4 freeze if the dry run shows they matter.
