@@ -1,2 +1,197 @@
 # One [[case]] per CVE in one plugin. Schema and labelling protocol: docs/DATASET.md. Validate with `wpbench validate`.
 # A label ([case.truth]) without reviewed_by and reviewed_on is not used for any metric. No plugin source is stored here.
+# Pilot cases chosen by the maintainer from dataset/candidates.md on 2026-11-01. Source is the NVD record of each CVE.
+# after_cutoff assumes the experiment model is Sonnet 5.5 (training cutoff June 2026); revisit when the model is decided.
+
+[[case]]
+id = "wp-0001"
+cve = "CVE-2026-15335"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-15335"
+retrieved = "2026-11-01"
+slug = "booking-package"
+vuln_version = "1.7.20"
+fixed_version = "1.7.21"
+vuln_sha256 = "8a5e126be4b01a1812d5c76cb1c8a00be076ec335ababac09750cd077fd3f2e9"
+fixed_sha256 = "350a9082f8608ea32591d5852ed510b44e34866b1d9cb8423e07bd1f97642054"
+cwe = "CWE-89"
+class = "sqli"
+auth = "unauthenticated"
+published = "2026-07-11"
+after_cutoff = true
+
+[case.truth]
+file = "lib/Schedule.php"
+function = "blockSameTimeBookingByUser"
+line_start = 9364
+line_end = 9400
+entry_point = "REST POST /wp-json/booking-package/v1/request (permission_callback __return_true) -> wp_ajax_booking_package_for_public, mode=sendBooking; needs the public booking nonce"
+data_flow = "booking form email field -> getUserValues()['emails'] -> sendBooking() -> blockSameTimeBookingByUser($emails) -> $email concatenated into a LIKE inside the $wpdb->prepare() template (2 queries) -> $wpdb->get_row(). Only reached when the calendar option blockSameTimeBookingByUser == 1"
+notes = """
+Two sinks: SQL string at line 9365 (endUnix not null) and 9394 (range query).
+`emails` LIKE '%\\"" . $email . "\\"%' AND `accountKey` = %d AND ...
+Fix 1.7.21 turns both into LIKE %s with the value as a prepare() argument.
+Draft: not yet confirmed that getUserValues() does not already restrict the email (advisory mentions is_email).
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0002"
+cve = "CVE-2026-4703"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-4703"
+retrieved = "2026-11-01"
+slug = "ws-form"
+vuln_version = "1.10.80"
+fixed_version = "1.10.82"
+vuln_sha256 = "48606d7bdb0fee8d65067221be706c630b6e57302764bf559f6cd2193276605a"
+fixed_sha256 = "12e783552291c82457ca31ed3c6130bbb2a23505d2a11a7eaf62f861e6e3ebae"
+cwe = "CWE-502"
+class = "object-injection"
+auth = "unauthenticated"
+published = "2026-08-22"
+after_cutoff = true
+
+[case.truth]
+file = "includes/class-ws-form-common.php"
+function = "maybe_unserialize"
+line_start = 7141
+line_end = 7159
+entry_point = "public form submission (WS Form submit endpoint) stores user-supplied values as submit meta; the stored value is later read back by admin/API code paths"
+data_flow = "submitted value stored in submit meta (meta_value) -> read back -> WS_Form_Common::maybe_unserialize() / raw unserialize() with no allowed_classes -> attacker-chosen object instantiated (no POP chain in the plugin itself)"
+notes = """
+Central sink: `$unserialized_string = @unserialize($serialized_string);` (line 7154, retry on 7158).
+Fix 1.10.82 adds allowed_classes = array('stdClass') there and replaces raw unserialize() elsewhere.
+Other vulnerable raw unserialize() sites: includes/core/class-ws-form-submit-meta.php:200 (db_delete_file),
+includes/core/class-ws-form-submit.php:3220 and :3544, api/class-ws-form-api-submit.php:219.
+Draft: reviewer must decide the primary label (central sink vs. submit-meta.php:200) and whether the others count as extra locations.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0003"
+cve = "CVE-2026-92807"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-92807"
+retrieved = "2026-11-01"
+slug = "save-as-pdf-by-pdfcrowd"
+vuln_version = "4.6.1"
+fixed_version = "4.6.2"
+vuln_sha256 = "46690de22871dc04a564c0dbf837db63510df75323283382252fec4b377fa940"
+fixed_sha256 = "ecfc3942b0878cb81e1d77377a1a281c9d1ddeb7d3e5dd7ed8388db13ebaaf5e"
+cwe = "CWE-94"
+class = "rce"
+auth = "contributor"
+published = "2026-09-19"
+after_cutoff = true
+
+[case.truth]
+file = "public/class-save-as-pdf-pdfcrowd-public.php"
+function = "save_as_pdf_pdfcrowd"
+line_start = 1721
+line_end = 1722
+entry_point = "shortcode [save_as_pdf_pdfcrowd] / block_save_as_pdf_pdfcrowd with a pdf_created_callback attribute (author with contributor access); the call runs in the wp_ajax_(nopriv_)save_as_pdf_pdfcrowd handler when the button is used"
+data_flow = "shortcode attribute pdf_created_callback -> eval_shortcode() copies every non-button_ attr into $custom_options (line ~956, no capability check) -> encrypted into the button -> wp_ajax handler decrypts $_POST['options'], json_decode, wp_parse_args into $options -> $options['pdf_created_callback']($hook_data) called as a function name"
+notes = """
+Sink: `if($options['pdf_created_callback']($hook_data)) {` (line 1722): attacker-chosen function name, first argument is an array.
+Root cause is the missing authorization in eval_shortcode() (~line 940-959); 4.6.2 adds after it
+`if(isset($custom_options['pdf_created_callback']) && !current_user_can('manage_options')) unset(...)`.
+Draft: label placed on the sink; the reviewer should decide whether eval_shortcode (same file) is the better anchor.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0004"
+cve = "CVE-2026-19807"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-19807"
+retrieved = "2026-11-01"
+slug = "bcs-mcp-manager"
+vuln_version = "1.2.3"
+fixed_version = "1.2.4"
+vuln_sha256 = "b6a06b43e4a46ba6c2c6923ce14dcfb356e283314f0d29dedfa62d9806b229cc"
+fixed_sha256 = "f15bd4a04ac4ba5d8391c85f58a97f0515767e73622b8494a807fe844de89654"
+cwe = "CWE-269"
+class = "privesc"
+auth = "subscriber"
+published = "2026-10-01"
+after_cutoff = true
+
+[case.truth]
+file = "includes/MCP/Server.php"
+function = "execute_tool"
+line_start = 2177
+line_end = 2185
+entry_point = "MCP JSON-RPC tool call wp_update_user_meta via the REST routes bcs-mcp/v1/mcp (and /messages) registered in includes/API/REST_Controller.php with permission_callback __return_true; authentication is resolved inside the handler (not read in detail for this draft)"
+data_flow = "tool arguments user_id, key, value -> execute_tool() case 'wp_update_user_meta' -> only gate is current_user_can('edit_user', $uid), which core grants for the caller's own ID -> key checked against a 3-item blocklist (user_pass, user_activation_key, session_tokens) -> non-string value passed through unsanitized -> update_user_meta($uid, 'wp_capabilities', array) = role change"
+notes = """
+Missing authorization / incomplete blocklist: `if ( ! current_user_can( 'edit_user', $uid ) ) throw ...` (line 2180), blocklist on 2182.
+wp_delete_user_meta (case at line 2187) has the same pattern; wp_get_user_meta (line 2163) redacts only sensitive keys.
+Fix 1.2.4: allow-list ALLOWED_USER_META_KEYS, requires promote_users, string-only values; also edit_user check in wp_assign_user_role (line ~3217).
+Draft: wp_delete_user_meta / wp_assign_user_role are secondary locations, not separate labels.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0005"
+cve = "CVE-2026-90981"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-90981"
+retrieved = "2026-11-01"
+slug = "newsletter"
+vuln_version = "9.3.8"
+fixed_version = "9.3.9"
+vuln_sha256 = "ec456d0d820f00098559488f1f8d4f6b2b44ac9b616ce546eaa6e54dd1e8c0a6"
+fixed_sha256 = "87f000fb70a6599f9e3b78e93ccb4683651043b7eebc3dc13a471cc651b82b48"
+cwe = "CWE-79"
+class = "reflected-xss"
+auth = "unauthenticated"
+published = "2026-09-18"
+after_cutoff = true
+
+[case.truth]
+file = "includes/module-base.php"
+function = "dienow"
+line_start = 1305
+line_end = 1311
+entry_point = "public subscription action (newsletter 'ns'/subscription handler in subscription/subscription.php, hook_newsletter_action) with the 'nn' (name) request parameter; payload shown only when an administrator views the response"
+data_flow = "$_REQUEST['nn'] -> build_subscription() -> subscription->data->name -> Newsletter antispam is_spam() returns WP_Error('spam-text', 'Spam text detected on name: ' . $full_name) (includes/antispam.php:35) -> subscription.php:238 dienow(..., $user->get_error_message(), 400) -> $admin_message appended unescaped when current_user_can('administrator') -> wp_die($message)"
+notes = """
+Sink: `$message .= $admin_message;` (line 1308) then `wp_die($message, $http_code);` (line 1310): no escaping.
+Source of the reflected text: antispam.php:35 concatenates the unescaped name into the error message.
+Fix 9.3.9: esc_html($message) and esc_html($admin_message), and wp_die() replaced by a minimal HTML page.
+Draft: exploitation needs a logged-in administrator to follow the link (admin-only branch); reviewer to confirm data_flow entry details (action parameter names not traced).
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0006"
+cve = "CVE-2026-93746"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-93746"
+retrieved = "2026-11-01"
+slug = "print-invoices-packing-slip-labels-for-woocommerce"
+vuln_version = "5.0.2"
+fixed_version = "5.0.3"
+vuln_sha256 = "339a6ff1ed4d39ab1a2b8193e97ce245668e4073e9f41d521e3566294e1c173f"
+fixed_sha256 = "501a606f9654808bfccbe30c431476204a39943658ac9199b12f5e4fa19891fc"
+cwe = "CWE-639"
+class = "missing-authz"
+auth = "unauthenticated"
+published = "2026-10-10"
+after_cutoff = true
+
+[case.truth]
+file = "admin/class-wf-woocommerce-packing-list-admin.php"
+function = "print_document_from_the_mail_link"
+line_start = 1139
+line_end = 1153
+entry_point = "any front-end request to init (hook 'init' -> print_window, priority 11, includes/class-wf-woocommerce-packing-list.php:379) with the mail-link parameters post, email and (empty) access_key; reaches print_document_from_the_mail_link() when guest document access is enabled"
+data_flow = "$_REQUEST['post'] (base64url order id) and $_REQUEST['email'] (base64url billing email) -> wf_decode() (reversible, not a secret) -> wc_get_order($decoded_order_id) -> `elseif ( $decoded_mail_id === $order->get_billing_email() )` accepted as proof of ownership -> invoice / packing document of that order is generated and returned"
+notes = """
+Authorization flaw (IDOR): line 1149 `} elseif ( $decoded_mail_id === ( $order->get_billing_email() ) ) {`
+accepts the billing email as credential; the order id is a sequential, guessable number.
+Fix 5.0.3: handler needs a valid nonce or an access_key (print_window ~line 989) and the email branch is removed.
+Draft: not traced - which document types are reachable after the check, and whether guest access is on by default.
+"""
+drafted_by = "claude"
