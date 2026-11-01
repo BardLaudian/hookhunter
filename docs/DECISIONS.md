@@ -116,3 +116,7 @@ Not searched: other WordPress audit skills (only one search done). Do that befor
   `needs-dynamic-check` is written with `"medium"` or `"low"` depending on how much of the chain is unverified; `refuted` is not written.
   `docs/SPEC.md` section 4 shows only `"high"` as an example of `confidence`, so the three-value set is a proposal to confirm in S3 and to add to the schema.
   Recall@3 ranks by this field, so the choice affects the benchmark.
+- **Reference index and checks (S2 close).** `reference/README.md` was added as an index; it is not in the layout of `docs/SKILL-DESIGN.md` section 1.
+  `tests/test_reference.py` checks the 18 files: line limit, `## Sources` last, required sections in class files, cross-references to files, scripts and `--class` values,
+  CVE allow-list, absence of weaponised payloads, absence of benchmark-case slugs and CVEs once `dataset/cases.toml` exists, and every CVSS table row against the formula.
+  Link liveness runs only with `WPBENCH_CHECK_URLS=1 pytest -m network`.

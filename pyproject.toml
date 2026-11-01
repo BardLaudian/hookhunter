@@ -3,6 +3,7 @@
 testpaths = ["skills/wp-plugin-audit/tests"]
 pythonpath = ["skills/wp-plugin-audit/scripts"]
 addopts = "-q"
+markers = ["network: fetches external URLs; enabled with WPBENCH_CHECK_URLS=1"]
 
 [tool.ruff]
 line-length = 120
