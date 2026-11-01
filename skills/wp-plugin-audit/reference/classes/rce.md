@@ -135,9 +135,9 @@ request value that reaches it, and why the guard (if any) does not stop it.
 | Subscriber or author-level execution | `PR:L/C:H/I:H/A:H` | 8.8 |
 | Administrator only (usually expected functionality) | `PR:H/C:H/I:H/A:H` | 7.2 |
 | Argument injection with limited effect (file read and write as the web user) | `PR:N/C:H/I:H/A:N` | 9.1 |
-| Execution needs a particular PHP version or optional component | `AC:H/PR:N/C:H/I:H/A:H` | 8.1 |
 
 Rate execution as C:H/I:H/A:H only when the request really controls code or a full command; for argument injection or hook triggering, rate what you showed.
+A dependency on a PHP version or optional component does not make the attack `AC:H`: CVSS scores the component as if it were in that configuration (`severity.md`).
 
 ## 8. What triagers reject
 

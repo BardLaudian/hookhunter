@@ -125,20 +125,22 @@ Not finding a gadget does **not** refute the bug: gadget availability depends on
 | Scenario | Vector | Score |
 |---|---|---|
 | Unauthenticated, chain to code execution in the audited tree | `AC:L/PR:N/C:H/I:H/A:H` | 9.8 |
-| Unauthenticated, chain needs a specific optional library or configuration | `AC:H/PR:N/C:H/I:H/A:H` | 8.1 |
 | Subscriber, chain to code execution | `AC:L/PR:L/C:H/I:H/A:H` | 8.8 |
-| Subscriber, chain needs specific conditions | `AC:H/PR:L/C:H/I:H/A:H` | 7.5 |
 | Unauthenticated, only a file-deletion chain | `AC:L/PR:N/C:N/I:H/A:H` | 9.1 |
 | Unauthenticated, only a limited-impact chain (read or SSRF) | `AC:L/PR:N/C:L/I:N/A:N` | 5.3 |
 
 With no chain, do not invent an impact: report the deserialization weakness, state that no chain was found, and rate the confidence low.
 
+CVSS 3.1 says that when a specific configuration is required for an attack to succeed, the vulnerable component is scored **as if it were in that
+configuration**. A chain that needs an optional library or another plugin is therefore still `AC:L`; use `AC:H` only when the attacker must overcome
+extra conditions such as learning a secret or environment detail, or winning a race. Name the dependency in the text.
+
 ## 8. What triagers reject
 
 Patchstack Alliance rules (read in full, 2026-11-01):
 - "PHP Object Injection" is an accepted vulnerability type, for unauthenticated and default Subscriber/Customer exploitation only.
-- "Any report involving Attack Complexity: High (AC:H)" is out of scope, so a chain that depends on an optional library or an unusual setting
-  is at risk of being rejected, and a finding scored AC:L needs a chain you can point to.
+- "Any report involving Attack Complexity: High (AC:H)" and "Unrealistic pre-requisites or exploitation scenarios" are out of scope. Per CVSS a chain that needs an
+  optional library is still `AC:L`, but it can be rejected as an unrealistic prerequisite, so point to a chain that exists in the audited tree or in a default install.
 - Also out of scope: "Unrealistic pre-requisites or exploitation scenarios"; components with fewer than 1,000 active installs outside mVDP;
   "Incomplete, inaccurate, or unverifiable information, or invalid vulnerability claims".
 

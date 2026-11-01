@@ -117,16 +117,20 @@ re-prints the value. `confirmed` needs file:line for the write (if stored), the 
 
 ## 6. Typical CVSS 3.1
 
-Scope changes because script runs in the victim's browser session (`S:C`). The conventional XSS vector keeps impact at
-Low unless the finding demonstrates more. `AV:N/AC:L/UI:R` in all rows; computed with the FIRST formula.
+Scope changes because script runs in the victim's browser, outside the web application's own security authority (`S:C`). `AV:N/AC:L/UI:R` in all rows; computed with the FIRST formula.
+
+Impact is the part that varies. FIRST's own stored-XSS example (CVE-2019-7551, a low-privileged user stores script that runs when an administrator opens the page) scores the
+**worst case**, `AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H` = 9.0, because script running as an administrator can create users and install code. The more common practice for reflected XSS is
+`C:L/I:L/A:N` (6.1). State which one you used and why; use the high-impact row only when the victim is an administrator (or another privileged user) and you say what the script can do.
 
 | Scenario | Vector | Score |
 |---|---|---|
-| Reflected or DOM, unauthenticated | `PR:N/S:C/C:L/I:L/A:N` | 6.1 |
-| Stored, written without an account | `PR:N/S:C/C:L/I:L/A:N` | 6.1 |
-| Stored, written by a subscriber/customer | `PR:L/S:C/C:L/I:L/A:N` | 5.4 |
-| Stored, written by a contributor or author | `PR:L/S:C/C:L/I:L/A:N` | 5.4 |
+| Reflected or DOM, unauthenticated, limited impact | `PR:N/S:C/C:L/I:L/A:N` | 6.1 |
+| Stored, written without an account, limited impact | `PR:N/S:C/C:L/I:L/A:N` | 6.1 |
+| Stored, written by a subscriber/customer, limited impact | `PR:L/S:C/C:L/I:L/A:N` | 5.4 |
+| Stored, written by a contributor or author, limited impact | `PR:L/S:C/C:L/I:L/A:N` | 5.4 |
 | Stored, written by an administrator | `PR:H/S:C/C:L/I:L/A:N` | 4.8 |
+| Stored, written by a low-privileged user, victim is an administrator, script acts as the administrator | `PR:L/S:C/C:H/I:H/A:H` | 9.0 |
 
 ## 7. What triagers reject
 
