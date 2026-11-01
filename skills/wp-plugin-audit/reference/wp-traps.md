@@ -28,6 +28,8 @@ a logic consequence of the code rather than something core documents, or *(PHP)*
 - **Why it fails:** for logged-out visitors the nonce is built from user id `0` and an empty session
   token, so every visitor receives the same value for a given action and time window, and it is given
   to anyone who loads the page. It is no CSRF protection and no authentication.
+- The Nonces handbook says the same: core generates one nonce for all guests (user id `0`), so "it does not
+  prevent guests from CSRF attacks".
 - **Safe:** treat the endpoint as public: validate input, rate-limit, do nothing privileged.
 
 ### 4. Nonce check that does not enforce
