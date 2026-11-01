@@ -95,7 +95,7 @@ Details checked in core:
 | Only a file name | `wp_basename()` / `basename()` on that value, joined to a fixed directory | `basename()` on the whole path when the directory is also user-controlled |
 | Stay inside a base directory | `realpath()` of the joined path, then check it starts with `realpath( $base ) . DIRECTORY_SEPARATOR` | A prefix check without the trailing separator (`/uploads` matches `/uploads-evil`); checking before resolving symlinks |
 | Fixed set of files | `in_array( $name, $allowed, true )` | Blacklisting `..` or extensions |
-| Allowed type | `wp_check_filetype_and_ext()` (extension and content against the allowed MIME list) | `wp_check_filetype()` (extension only), the browser-supplied `$_FILES['type']` |
+| Allowed type | `wp_check_filetype_and_ext()` (extension against the allowed list, plus the detected image type, and the detected MIME type when PHP's `fileinfo` is loaded) | `wp_check_filetype()` (extension only), the browser-supplied `$_FILES['type']` |
 
 Details checked in core:
 
