@@ -1,0 +1,16 @@
+{
+ "findings": [
+  {
+   "file": "csrf-vuln.php",
+   "line_start": 11,
+   "line_end": 11,
+   "function": "fx_handle_form",
+   "entry_point": "admin_init",
+   "cwe": "CWE-352",
+   "class": "csrf",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_POST['fx_opt'] -> sanitize_text_field -> update_option('fx_opt'); current_user_can present, no nonce",
+   "confidence": "high"
+  }
+ ]
+}

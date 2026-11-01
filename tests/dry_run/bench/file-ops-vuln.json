@@ -1,0 +1,40 @@
+{
+ "findings": [
+  {
+   "file": "file-ops-vuln.php",
+   "line_start": 8,
+   "line_end": 8,
+   "function": "fx_files",
+   "entry_point": "wp_ajax_nopriv_fx_files",
+   "cwe": "CWE-434",
+   "class": "file-upload",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_FILES['f']['name'] -> $dest in wp-content/uploads -> move_uploaded_file; no extension or type check, no capability",
+   "confidence": "high"
+  },
+  {
+   "file": "file-ops-vuln.php",
+   "line_start": 9,
+   "line_end": 9,
+   "function": "fx_files",
+   "entry_point": "wp_ajax_nopriv_fx_files",
+   "cwe": "CWE-98",
+   "class": "file-inclusion",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_GET['tpl'] -> include, no allow-list, no containment",
+   "confidence": "high"
+  },
+  {
+   "file": "file-ops-vuln.php",
+   "line_start": 10,
+   "line_end": 10,
+   "function": "fx_files",
+   "entry_point": "wp_ajax_nopriv_fx_files",
+   "cwe": "CWE-22",
+   "class": "file-delete",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_POST['file'] -> WP_CONTENT_DIR . '/' . value -> unlink; no basename or realpath",
+   "confidence": "high"
+  }
+ ]
+}

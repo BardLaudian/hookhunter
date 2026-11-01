@@ -1,0 +1,28 @@
+{
+ "findings": [
+  {
+   "file": "open-redirect-vuln.php",
+   "line_start": 8,
+   "line_end": 8,
+   "function": "fx_go",
+   "entry_point": "template_redirect",
+   "cwe": "CWE-601",
+   "class": "open-redirect",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_GET['next'] -> wp_redirect; no wp_validate_redirect",
+   "confidence": "high"
+  },
+  {
+   "file": "open-redirect-vuln.php",
+   "line_start": 12,
+   "line_end": 12,
+   "function": "fx_go",
+   "entry_point": "template_redirect",
+   "cwe": "CWE-601",
+   "class": "open-redirect",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_GET['to'] -> header('Location: ' . value); no validation",
+   "confidence": "high"
+  }
+ ]
+}
