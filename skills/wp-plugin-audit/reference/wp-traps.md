@@ -53,9 +53,13 @@ a logic consequence of the code rather than something core documents, or *(PHP)*
 - `is_super_admin()` on a single site is true for any user with `delete_users` (an administrator); on
   multisite only for the network's super admins.
 - `unfiltered_html` is not granted to administrators on multisite, and `DISALLOW_UNFILTERED_HTML` removes
-  it from everyone, even on single sites. So "an administrator can inject script" is a real boundary on
-  multisite and hardened sites and a non-boundary on a default single site. Triagers apply this
-  (see `severity.md`).
+  it from everyone, even on single sites. So "an administrator can inject script" is a real privilege
+  boundary on multisite and hardened sites and not one on a default single site.
+- Disclosure programs do not scope by site type. Patchstack's Alliance rules accept only unauthenticated
+  and Subscriber/Customer-level reports and list "Contributor-level (or higher) stored XSS" as out of
+  scope; Wordfence reportedly treats `PR:H` reports, including Administrator and `unfiltered_html`
+  roles, as outside its bounty (not verified at source; see `classes/authz.md`, "What triagers reject").
+  A multisite-only exception is not documented in anything read for this skill.
 
 ### 7. `nopriv` versus logged-in dispatch
 - `admin-ajax.php` dispatches by login state: logged-in users reach only `wp_ajax_{action}`; visitors only
