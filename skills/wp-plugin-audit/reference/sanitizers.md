@@ -131,7 +131,7 @@ Details checked in core:
 |---|---|---|
 | Value as a shell argument | `escapeshellarg()` on **each** argument, command fixed in code | `escapeshellcmd()` on a whole line, `addslashes()`, a blacklist of `;` and `|` |
 | User-chosen function or method | strict `in_array()` against a fixed map, then call from the map | `is_callable()`, `function_exists()`, `method_exists()` |
-| `unserialize()` | Avoid; `json_decode()`. If unavoidable, `[ 'allowed_classes' => false ]` | `maybe_unserialize()` on request data; `allowed_classes` listing a class with a magic method that does work |
+| `unserialize()` | Avoid; `json_decode()`. If unavoidable, `[ 'allowed_classes' => false ]` reduces object creation, but the PHP manual still says not to pass untrusted input | `maybe_unserialize()` on request data (it adds no options); `allowed_classes` listing a class with a magic method that does work |
 | XML | Parse without `LIBXML_NOENT` / `LIBXML_DTDLOAD` (default flags) | Setting those flags, or relying on `libxml_disable_entity_loader()` (deprecated since PHP 8.0) |
 
 These come from the PHP manual and OWASP, not WordPress core; see the class files for context.
