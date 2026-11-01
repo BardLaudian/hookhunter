@@ -154,7 +154,7 @@ def claude_args(cond: Condition, model: str, budget_usd: float, prompt: str) -> 
     """Arguments after ``claude`` (flags confirmed against 2.1.316, docs/DECISIONS.md section 3)."""
     return [
         "-p", prompt,
-        "--output-format", "json",
+        "--output-format", "stream-json", "--verbose",
         "--model", model,
         "--tools", ",".join(cond.tools),
         "--allowedTools", ",".join(cond.allowed_tools()),

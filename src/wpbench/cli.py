@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import shlex
+import subprocess
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from wpbench import __version__
+from wpbench import env as envmod
 from wpbench.cases import DEFAULT_DATASET, Case, Issue, load_cases, summarise
 from wpbench.diff import CHANGED_LINES_LIMIT, changed_lines, diff_trees
+from wpbench.execute import Context, execute
 from wpbench.fetch import FetchError, fetch_case, http_download
 from wpbench.runplan import (
     BASE_CONTEXT_TOKENS,
@@ -22,6 +27,7 @@ from wpbench.runplan import (
     PRICES,
     SCENARIOS,
     ContainerSpec,
+    Run,
     build_plan,
     default_skill_dirs,
     docker_command,
@@ -200,6 +206,12 @@ def run(
     model: Annotated[str, typer.Option(help="Model recorded with every run.")] = DEFAULT_MODEL,
     budget_usd: Annotated[float, typer.Option(help="Hard cap per run, passed to claude --max-budget-usd.")] = 3.0,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Show the plan, the container command and the cost estimate; start nothing.")] = False,
+    experiment: Annotated[str | None, typer.Option(help="Name of the experiment; runs go to runs/NAME and a re-run resumes it.")] = None,
+    yes: Annotated[bool, typer.Option("--yes", help="Confirm that the runs spend money.")] = False,
+    jobs: Annotated[int, typer.Option(min=1, help="Containers in parallel.")] = 1,
+    max_total_usd: Annotated[float, typer.Option(help="Stop starting runs once this much has been spent.")] = 50.0,
+    timeout_min: Annotated[int, typer.Option(min=1, help="Kill a run after this many minutes.")] = 40,
+    retry_errors: Annotated[bool, typer.Option(help="Re-run runs that ended in error or timeout.")] = False,
     allow_unsigned: Annotated[bool, typer.Option(help="Include cases whose label is not signed (never for reported metrics).")] = False,
     dataset: DatasetOpt = DEFAULT_DATASET,
     cases_dir: CasesDirOpt = Path("cases"),
@@ -222,10 +234,6 @@ def run(
     if not selected:
         err.print("[yellow]no cases selected[/yellow]")
         raise typer.Exit(0)
-    if not dry_run:
-        err.print("[red]Execution is not enabled yet: Phase 3 shows the dry run and the estimate first. Use --dry-run.[/red]")
-        raise typer.Exit(2)
-
     plan = build_plan(selected, names, repeats)
     spec = ContainerSpec()
     skill_dirs = default_skill_dirs()
@@ -243,7 +251,7 @@ def run(
     mean_src = sum(known) // len(known) if known else 300_000
     console.print("\n[bold]Container command for the first run[/bold] (not executed):")
     prompt = prompt_file.read_text(encoding="utf-8") if prompt_file.exists() else "<prompt missing>"
-    first = docker_command(plan[0], CONDITIONS[plan[0].condition], spec, cases_dir, Path("runs/<id>"), model, budget_usd, "<prompts/task.md>")
+    first = docker_command(plan[0], CONDITIONS[plan[0].condition], spec, cases_dir, Path("runs") / (experiment or "<experiment>"), model, budget_usd, "<prompts/task.md>")
     console.print(" ".join(shlex.quote(x) for x in first), soft_wrap=True, highlight=False)
     console.print(f"task prompt: {len(prompt.split())} words, identical for every condition")
 
@@ -252,7 +260,8 @@ def run(
     for ck in pf.checks:
         mark = "[green]ok[/green]" if ck.ok else ("[red]FAIL[/red]" if ck.blocking else "[yellow]warn[/yellow]")
         console.print(f"  {mark} {ck.name}: {ck.detail}", highlight=False)
-    console.print("  [red]NOT READY[/red] egress: the allow-list proxy and the docker image are not built or tested (see docs/DECISIONS.md section 15)")
+    envst = envmod.status(spec)
+    console.print(f"  {'[green]ok[/green]' if envst.ready else '[red]FAIL[/red]'} docker environment: image={envst.image} internal network={envst.network_internal} proxy running={envst.proxy_running}")
 
     console.print("\n[bold]Estimate for this plan[/bold] (a model with assumptions, not a measurement)")
     et = Table("condition", "runs", "low", "mid", "high", "mid time/run")
@@ -289,3 +298,79 @@ def run(
         f"base context {BASE_CONTEXT_TOKENS:,} tokens + skill; prices ${price.input:g}/${price.output:g} per M, cache read ${price.cache_read:g}, "
         "write $2.5; 6 s per call + output at 60 tok/s. Prompt caching assumed to work."
     )
+
+    if dry_run:
+        return
+
+    # ---- execution -------------------------------------------------------------------------------------------
+    problems = [f"{c.name}: {c.detail}" for c in pf.checks if c.blocking and not c.ok]
+    if not envmod.status(spec).ready:
+        problems.append("docker environment not ready (run `wpbench env build` and `wpbench env up`)")
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        problems.append("ANTHROPIC_API_KEY is not set (the containers authenticate with it; the cost is billed to that key)")
+    if not experiment:
+        problems.append("--experiment NAME is required (it names runs/NAME and makes the run resumable)")
+    if not yes:
+        problems.append("pass --yes to confirm that this spends money (estimate above)")
+    if problems:
+        for p in problems:
+            err.print(f"[red]cannot start:[/red] {p}", highlight=False)
+        raise typer.Exit(2)
+    schema_path = Path("schemas/findings.schema.json")
+    ctx = Context(
+        exp_dir=Path("runs") / str(experiment), cases_dir=cases_dir, skill_dirs=skill_dirs, spec=spec, model=model, budget_usd=budget_usd,
+        prompt=prompt, schema=json.loads(schema_path.read_text(encoding="utf-8")), timeout_s=timeout_min * 60,
+        prompt_sha=hashlib.sha256(prompt.encode()).hexdigest(), schema_sha=hashlib.sha256(schema_path.read_bytes()).hexdigest(),
+        claude_version=subprocess.run(["claude", "--version"], capture_output=True, text=True, check=False).stdout.strip(),
+    )
+
+    def report(r: Run, rec: dict[str, Any]) -> None:
+        console.print(f"{r.run_id}: {rec.get('status')} cost={_money(float(rec.get('cost_usd') or 0))} turns={rec.get('turns')} skill={rec.get('skill_invoked')} findings={len(rec.get('findings') or [])}", highlight=False)
+
+    summary = execute(plan, ctx, jobs=jobs, max_total_usd=max_total_usd, retry_errors=retry_errors, on_done=report)
+    console.print(summary)
+    if summary["remaining"]:
+        err.print("[yellow]stopped before finishing; re-run the same command to resume[/yellow]")
+        raise typer.Exit(1)
+
+
+env_app = typer.Typer(help="Docker environment for agent runs: images, internal network, egress proxy.", no_args_is_help=True)
+app.add_typer(env_app, name="env")
+
+
+@env_app.command("build")
+def env_build() -> None:
+    """Build the agent and proxy images (copies the local claude binary into the build context)."""
+    try:
+        for line in envmod.build(ContainerSpec()):
+            console.print(line)
+    except RuntimeError as exc:
+        err.print(f"[red]{exc}[/red]", highlight=False)
+        raise typer.Exit(1) from exc
+
+
+@env_app.command("up")
+def env_up() -> None:
+    """Create the internal network and start the allow-list proxy."""
+    try:
+        for line in envmod.up(ContainerSpec()):
+            console.print(line)
+    except RuntimeError as exc:
+        err.print(f"[red]{exc}[/red]", highlight=False)
+        raise typer.Exit(1) from exc
+
+
+@env_app.command("down")
+def env_down() -> None:
+    """Remove the proxy and the network."""
+    for line in envmod.down(ContainerSpec()):
+        console.print(line)
+
+
+@env_app.command("check")
+def env_check() -> None:
+    """Report whether images, network and proxy are in place."""
+    st = envmod.status(ContainerSpec())
+    for name, ok in (("agent image", st.image), ("proxy image", st.proxy_image), ("internal network", st.network_internal), ("proxy running", st.proxy_running)):
+        console.print(f"{'[green]ok[/green]' if ok else '[red]missing[/red]'} {name}")
+    raise typer.Exit(0 if st.ready else 1)

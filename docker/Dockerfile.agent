@@ -1,0 +1,8 @@
+# Agent image: Claude Code + python3 (for hookhunter's scripts). No PHP, no WordPress, nothing that can run plugin code.
+# Build with `wpbench env build`; it copies the local claude binary to docker/claude (git-ignored) first.
+FROM python:3.12-slim
+RUN pip install --no-cache-dir "tree-sitter==0.26.0" "tree-sitter-php==0.25.1" \
+ && useradd --uid 1000 --create-home --home-dir /home/agent agent
+COPY claude /usr/local/bin/claude
+USER 1000
+WORKDIR /work
