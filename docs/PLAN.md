@@ -16,7 +16,7 @@ Order matters: the new skill is **built and frozen before it ever sees a benchma
 ## Part S — The skill (before any benchmark case exists)
 
 ### S1 — Scripts (2–3 h)
-`skills/wp-plugin-audit/scripts/` per SKILL-DESIGN.md §3 with tree-sitter (pinned) and a regex
+`skills/hookhunter/scripts/` per SKILL-DESIGN.md §3 with tree-sitter (pinned) and a regex
 fallback. Write the synthetic fixture plugins first (one per class + safe twins), then the scripts,
 test-first. Performance check on a large synthetic tree.
 

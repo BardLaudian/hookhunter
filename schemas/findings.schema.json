@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.invalid/wp-audit-bench/findings.schema.json",
   "title": "wp-audit-bench findings",
-  "description": "Output of one audit run (docs/SPEC.md section 4). Enumerations follow skills/wp-plugin-audit/SKILL.md; see docs/DECISIONS.md section 9.",
+  "description": "Output of one audit run (docs/SPEC.md section 4). Enumerations follow skills/hookhunter/SKILL.md; see docs/DECISIONS.md section 9.",
   "type": "object",
   "additionalProperties": false,
   "required": ["findings"],

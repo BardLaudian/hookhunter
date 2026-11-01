@@ -9,13 +9,13 @@ built from the vulnerable→patched diff.
 Question it answers: *"Does this skill improve recall, precision and cost compared with no skill
 (and with a non-LLM baseline)?"* — something almost no skill/prompt pack measures.
 
-Deliverables: a new skill `wp-plugin-audit` (in `skills/`), the dataset (metadata + labels, no plugin
+Deliverables: a new skill `hookhunter` (in `skills/`), the dataset (metadata + labels, no plugin
 code redistributed), the harness, a results report with ablations, and a blog post.
 
 ## Source-of-truth documents
 - `docs/SPEC.md` — harness, conditions, output schema, scoring, metrics. The contract.
 - `docs/DATASET.md` — case selection, splits, labelling protocol (human-signed labels).
-- `docs/SKILL-DESIGN.md` — the new skill `wp-plugin-audit` (built from scratch): layout, workflow,
+- `docs/SKILL-DESIGN.md` — the new skill `hookhunter` (built from scratch): layout, workflow,
   scripts, reference rules, ablations, freeze rule.
 - `docs/PLAN.md` — phases and acceptance criteria.
 If code and docs disagree, docs win; ambiguities go to `docs/DECISIONS.md`.

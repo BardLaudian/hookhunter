@@ -6,7 +6,7 @@ agent find it
 
 - **A. without a skill** (a plain audit prompt),
 - **B. with `wp-plugin-triage` v1** (the current skill),
-- **C. with the new `wp-plugin-audit` skill** (built from scratch, see SKILL-DESIGN.md), plus its
+- **C. with the new `hookhunter` skill** (built from scratch, see SKILL-DESIGN.md), plus its
   ablations C-min (SKILL.md only) and C-noscripts (no helper scripts),
 - **D. with a non-LLM baseline** (Semgrep with public WordPress/PHP rules, if a reasonable rule set
   exists — Phase 0 decides; otherwise drop D and say why),
@@ -28,8 +28,8 @@ Each case = one CVE in one plugin: a **vulnerable version** and the **first patc
 - Inside, Claude Code is invoked headless, e.g.
   `claude -p "<task prompt>" --output-format json --allowedTools "Read,Grep,Glob"` (confirm the
   exact flags with `claude --help` in Phase 0 and record them in DECISIONS.md). For condition A no
-  skill is present; for B/C the skill is copied to `.claude/skills/wp-plugin-triage/` in the
-  working directory (confirm how Claude Code discovers project skills in Phase 0).
+  skill is present; for B/C the skill is copied to `.claude/skills/<skill-name>/` (`wp-plugin-triage` for B,
+  `hookhunter` for C) in the working directory (confirm how Claude Code discovers project skills in Phase 0).
   Networking: the model API must still be reachable — if `--network none` blocks it, use a network
   that allows **only** the API endpoint (document how), never general internet.
 - The task prompt is identical across conditions except for the skill, stored in

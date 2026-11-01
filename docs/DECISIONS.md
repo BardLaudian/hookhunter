@@ -143,3 +143,11 @@ Not searched: other WordPress audit skills (only one search done). Do that befor
   `prepare()` template, a serialized string, XML), so `reference/wp-traps.md` trap 19 and the refutation reason `source-still-slashed` were added, and the fixtures now unslash the value.
   The artifacts are checked by `tests/test_dry_run.py` (schema, labelled lines, safe twins, freshness against the generator).
 - **Dependencies.** `requirements-dev.txt` lists the packages used by the scripts' tests (jsonschema and PyYAML were added in S3).
+
+## 11. Skill name
+
+- The skill is named `hookhunter` (directory `skills/hookhunter/`, `name: hookhunter`), chosen by the maintainer on 2026-11-01. The description is unchanged and still opens with the use case; the
+  name is not repeated in it.
+- `docs/SPEC.md` said that for conditions B and C the skill is copied to `.claude/skills/wp-plugin-triage/`; that is only right for B. It now says `.claude/skills/<skill-name>/` with both names.
+- The activation results recorded before the rename (dev 6/8 then 8/8, held-out 8/8, 0 false triggers) were produced under the previous name; those result files were removed from the working tree and remain in git
+  history at commit `0b74cf0`, the last one with the previous name. The evals were rerun under the new name (section 12).

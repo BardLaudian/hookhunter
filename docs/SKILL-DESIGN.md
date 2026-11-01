@@ -1,4 +1,4 @@
-# wp-plugin-audit — Design of the new skill (built from scratch)
+# hookhunter — Design of the new skill (built from scratch)
 
 The old `wp-plugin-triage` stays as condition B (baseline); this new skill is
 condition C. Goal: the most effective white-box audit skill for WordPress plugins we can build from
@@ -21,7 +21,7 @@ only; anything that would need a running site is reported as `needs-dynamic-chec
 
 ## 1. Layout
 ```
-skills/wp-plugin-audit/
+skills/hookhunter/
 ├── SKILL.md                      # ≤ 250 lines: modes, workflow, gates, output contract
 ├── reference/
 │   ├── surface.md                # WordPress entry points and how each is reached (auth, nonce, caps)
@@ -41,7 +41,7 @@ skills/wp-plugin-audit/
 ```
 
 ## 2. SKILL.md content
-**Frontmatter:** `name: wp-plugin-audit`; description leading with the use case ("Audit the PHP source
+**Frontmatter:** `name: hookhunter`; description leading with the use case ("Audit the PHP source
 of a WordPress plugin or theme for vulnerabilities …"), trigger phrases (EN + ES);
 `allowed-tools` limited to Read, Grep, Glob and `Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)`.
 Only portable keys if it must also run on claude.ai (check SKILL authoring docs).
