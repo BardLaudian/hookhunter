@@ -1,0 +1,3 @@
+# Optional but recommended: without them the scripts fall back to a regex backend.
+tree-sitter==0.26.0
+tree-sitter-php==0.25.1
