@@ -1,0 +1,281 @@
+{
+ "split": "dev",
+ "model": "sonnet",
+ "summary": {
+  "n": 17,
+  "tp": 6,
+  "fn": 2,
+  "fp": 0,
+  "tn": 9,
+  "cost_usd": 0.325,
+  "recall": 0.75,
+  "false_trigger_rate": 0.0,
+  "recall_en": 0.75,
+  "recall_es": 0.75
+ },
+ "rows": [
+  {
+   "id": "en-p1",
+   "group": "positive",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": true,
+   "triggered": true,
+   "skills_invoked": [
+    "wp-plugin-audit"
+   ],
+   "first_tools": [
+    "Skill"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0205,
+   "returncode": 1
+  },
+  {
+   "id": "en-p3",
+   "group": "positive",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": true,
+   "triggered": true,
+   "skills_invoked": [
+    "wp-plugin-audit"
+   ],
+   "first_tools": [
+    "Skill"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0209,
+   "returncode": 1
+  },
+  {
+   "id": "en-p5",
+   "group": "positive",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": true,
+   "triggered": true,
+   "skills_invoked": [
+    "wp-plugin-audit"
+   ],
+   "first_tools": [
+    "Skill"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0206,
+   "returncode": 1
+  },
+  {
+   "id": "en-p7",
+   "group": "positive",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": true,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [
+    "Glob",
+    "Grep"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0166,
+   "returncode": 1
+  },
+  {
+   "id": "es-p1",
+   "group": "positive",
+   "lang": "es",
+   "split": "dev",
+   "expect_trigger": true,
+   "triggered": true,
+   "skills_invoked": [
+    "wp-plugin-audit"
+   ],
+   "first_tools": [
+    "Skill"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0146,
+   "returncode": 1
+  },
+  {
+   "id": "es-p3",
+   "group": "positive",
+   "lang": "es",
+   "split": "dev",
+   "expect_trigger": true,
+   "triggered": true,
+   "skills_invoked": [
+    "wp-plugin-audit"
+   ],
+   "first_tools": [
+    "Skill"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0144,
+   "returncode": 1
+  },
+  {
+   "id": "es-p5",
+   "group": "positive",
+   "lang": "es",
+   "split": "dev",
+   "expect_trigger": true,
+   "triggered": true,
+   "skills_invoked": [
+    "wp-plugin-audit"
+   ],
+   "first_tools": [
+    "Skill"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0153,
+   "returncode": 1
+  },
+  {
+   "id": "es-p7",
+   "group": "positive",
+   "lang": "es",
+   "split": "dev",
+   "expect_trigger": true,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [
+    "Glob"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0161,
+   "returncode": 1
+  },
+  {
+   "id": "en-n1",
+   "group": "negative",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [
+    "Write"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.023,
+   "returncode": 1
+  },
+  {
+   "id": "en-n3",
+   "group": "negative",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [],
+   "skill_was_listed": true,
+   "cost_usd": 0.0252,
+   "returncode": 0
+  },
+  {
+   "id": "en-n5",
+   "group": "negative",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [],
+   "skill_was_listed": true,
+   "cost_usd": 0.0211,
+   "returncode": 0
+  },
+  {
+   "id": "en-n7",
+   "group": "negative",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [
+    "Glob",
+    "Grep"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0167,
+   "returncode": 1
+  },
+  {
+   "id": "en-n9",
+   "group": "negative",
+   "lang": "en",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [],
+   "skill_was_listed": true,
+   "cost_usd": 0.0212,
+   "returncode": 0
+  },
+  {
+   "id": "es-n1",
+   "group": "negative",
+   "lang": "es",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [
+    "Write"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0192,
+   "returncode": 1
+  },
+  {
+   "id": "es-n3",
+   "group": "negative",
+   "lang": "es",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [],
+   "skill_was_listed": true,
+   "cost_usd": 0.0293,
+   "returncode": 0
+  },
+  {
+   "id": "es-n5",
+   "group": "negative",
+   "lang": "es",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [
+    "Glob",
+    "Glob"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0151,
+   "returncode": 1
+  },
+  {
+   "id": "es-n7",
+   "group": "negative",
+   "lang": "es",
+   "split": "dev",
+   "expect_trigger": false,
+   "triggered": false,
+   "skills_invoked": [],
+   "first_tools": [
+    "Glob",
+    "Glob"
+   ],
+   "skill_was_listed": true,
+   "cost_usd": 0.0148,
+   "returncode": 1
+  }
+ ]
+}

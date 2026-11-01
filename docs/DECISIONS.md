@@ -120,3 +120,26 @@ Not searched: other WordPress audit skills (only one search done). Do that befor
   `tests/test_reference.py` checks the 18 files: line limit, `## Sources` last, required sections in class files, cross-references to files, scripts and `--class` values,
   CVE allow-list, absence of weaponised payloads, absence of benchmark-case slugs and CVEs once `dataset/cases.toml` exists, and every CVSS table row against the formula.
   Link liveness runs only with `WPBENCH_CHECK_URLS=1 pytest -m network`.
+
+## 10. S3: SKILL.md, output schema and activation evals
+
+- **Output schema.** `schemas/findings.schema.json` is the machine-readable form of `docs/SPEC.md` section 4 and is the contract that `SKILL.md`, the dry-run artifacts and (in Phases 3 and 4) the harness
+  and scorer share. Value sets fixed in S3, to be reviewed: `class` is one of 17 slugs (`stored-xss`, `reflected-xss`, `dom-xss`, `sqli`, `missing-authz`, `csrf`, `path-traversal`, `file-delete`,
+  `file-upload`, `file-inclusion`, `object-injection`, `ssrf`, `open-redirect`, `privesc`, `rce`, `info-disclosure`, `xxe`); `auth_required` is `unauthenticated`, `subscriber`, `contributor` (also author-level)
+  or `admin`; `confidence` is `high`, `medium`, `low`. Extra keys are rejected (there is no PoC field). The CWE family map of `docs/SPEC.md` section 5 still has to be written in Phase 4 for these slugs.
+- **Frontmatter.** `name`, `description` and `allowed-tools` only, so the file stays valid for other agents that read the standard fields. `allowed-tools` pre-approves tools for the turn; it does not restrict them
+  (Claude Code documentation). In the benchmark the restriction to Read, Grep and Glob is enforced by the harness (`--tools`), as in `docs/SPEC.md` section 3.
+- **Phase 0 questions answered by the S3 evals (2026-11-01, Claude Code 2.1.316).** A skill placed in `.claude/skills/<name>/` of the working directory is discovered and invoked in headless `-p` mode.
+  `--setting-sources project` removes the user-level skills (31 loaded by default, 17 left, none from the user's account), which is how a condition is isolated. The `json` and `stream-json` outputs carry
+  `total_cost_usd`, `usage` (input, output, cache creation and read tokens), `duration_ms`, `num_turns` and `modelUsage` with the model id. A minimal call cost 0.017 to 0.047 USD depending on what was loaded.
+  Authentication in this environment is the logged-in account (no API key); the Docker image of Phase 3 will need its own credentials.
+- **Activation evals** (`tests/evals/triggers.json`, runner `tests/run_trigger_evals.py`, results in `tests/evals/results-*.json`): 32 prompts, English and Spanish, 16 that should load the skill and 16 that should not
+  (other PHP and WordPress work, a security audit of non-WordPress code, a live-site scan, site hardening). Dev split before tuning: 6 of 8 positives, 0 of 9 false triggers; both misses were "write the vulnerability
+  report" requests, so the description was extended and the dev split rerun (8 of 8, 0 of 9). Held-out split, run once afterwards: 8 of 8 positives (4 English, 4 Spanish), 0 of 7 false triggers. One run per prompt,
+  one assistant turn each, model alias `sonnet` (claude-sonnet-5-5), about 0.90 USD in total. Limits: small sample, first move only, no repeats, and no competing skill: with the user's `wp-plugin-triage` installed both
+  would match the same requests.
+- **Dry run on the synthetic fixtures** (`tests/dry_run/`: `build_dry_run.py`, `bench/*.json`, `REPORT.md`). The workflow was followed by hand. It exposed three fixture defects and one gap in the reference, all fixed:
+  the cURL handle in `ssrf-vuln` was never executed; the nonces checked in `authz-*` and `privesc-*` were never created; and three labelled payloads needed quotes that `wp_magic_quotes` escapes (a variable inside a
+  `prepare()` template, a serialized string, XML), so `reference/wp-traps.md` trap 19 and the refutation reason `source-still-slashed` were added, and the fixtures now unslash the value.
+  The artifacts are checked by `tests/test_dry_run.py` (schema, labelled lines, safe twins, freshness against the generator).
+- **Dependencies.** `requirements-dev.txt` lists the packages used by the scripts' tests (jsonschema and PyYAML were added in S3).

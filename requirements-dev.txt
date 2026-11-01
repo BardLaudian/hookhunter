@@ -1,0 +1,8 @@
+# Development tools for the skill scripts and their tests (the wpbench package gets its own pyproject in Phase 1).
+pytest>=9
+ruff>=0.17
+mypy>=2.4
+jsonschema>=4.26
+pyyaml>=6
+tree-sitter==0.26.0
+tree-sitter-php==0.25.1

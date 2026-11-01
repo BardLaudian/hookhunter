@@ -1,0 +1,16 @@
+{
+ "findings": [
+  {
+   "file": "authz-vuln.php",
+   "line_start": 11,
+   "line_end": 11,
+   "function": "fx_save",
+   "entry_point": "wp_ajax_fx_save",
+   "cwe": "CWE-862",
+   "class": "missing-authz",
+   "auth_required": "subscriber",
+   "data_flow": "$_POST['t'] -> sanitize_text_field -> update_option('fx_title'); check_ajax_referer only, no current_user_can",
+   "confidence": "high"
+  }
+ ]
+}

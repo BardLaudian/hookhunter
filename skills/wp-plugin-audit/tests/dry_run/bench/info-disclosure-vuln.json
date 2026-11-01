@@ -1,0 +1,28 @@
+{
+ "findings": [
+  {
+   "file": "info-disclosure-vuln.php",
+   "line_start": 7,
+   "line_end": 7,
+   "function": "fx_dump",
+   "entry_point": "wp_ajax_nopriv_fx_dump",
+   "cwe": "CWE-200",
+   "class": "info-disclosure",
+   "auth_required": "unauthenticated",
+   "data_flow": "nopriv handler -> phpinfo(), no capability check",
+   "confidence": "high"
+  },
+  {
+   "file": "info-disclosure-vuln.php",
+   "line_start": 8,
+   "line_end": 8,
+   "function": "fx_dump",
+   "entry_point": "wp_ajax_nopriv_fx_dump",
+   "cwe": "CWE-200",
+   "class": "info-disclosure",
+   "auth_required": "unauthenticated",
+   "data_flow": "get_users() (WP_User objects with user_pass) -> wp_send_json_success; no capability",
+   "confidence": "high"
+  }
+ ]
+}

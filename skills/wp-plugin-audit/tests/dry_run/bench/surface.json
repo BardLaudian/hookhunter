@@ -1,0 +1,40 @@
+{
+ "findings": [
+  {
+   "file": "surface.php",
+   "line_start": 35,
+   "line_end": 35,
+   "function": "ajax_b",
+   "entry_point": "wp_ajax_nopriv_fx_b",
+   "cwe": "CWE-862",
+   "class": "missing-authz",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_POST['b'] -> update_option('fx_b'); nopriv, no nonce, no capability",
+   "confidence": "high"
+  },
+  {
+   "file": "surface.php",
+   "line_start": 97,
+   "line_end": 97,
+   "function": "fx_post_c",
+   "entry_point": "admin_post_nopriv_fx_c",
+   "cwe": "CWE-862",
+   "class": "missing-authz",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_POST['c'] -> update_option('fx_c'); admin_post_nopriv, no nonce, no capability",
+   "confidence": "high"
+  },
+  {
+   "file": "surface.php",
+   "line_start": 31,
+   "line_end": 31,
+   "function": "ajax_a",
+   "entry_point": "wp_ajax_fx_a",
+   "cwe": "CWE-863",
+   "class": "missing-authz",
+   "auth_required": "contributor",
+   "data_flow": "nonce + current_user_can('edit_posts') (via verify()) -> update_option('fx_a')",
+   "confidence": "low"
+  }
+ ]
+}

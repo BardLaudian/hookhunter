@@ -1,0 +1,28 @@
+{
+ "findings": [
+  {
+   "file": "xss-vuln.php",
+   "line_start": 7,
+   "line_end": 7,
+   "function": "fx_xss_render",
+   "entry_point": "fx_search",
+   "cwe": "CWE-79",
+   "class": "reflected-xss",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_GET['q'] -> echo in a text node of the [fx_search] shortcode, no esc_html",
+   "confidence": "high"
+  },
+  {
+   "file": "xss-vuln.php",
+   "line_start": 8,
+   "line_end": 8,
+   "function": "fx_xss_render",
+   "entry_point": "fx_search",
+   "cwe": "CWE-79",
+   "class": "reflected-xss",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_GET['v'] -> printf into a double-quoted attribute, no esc_attr",
+   "confidence": "high"
+  }
+ ]
+}

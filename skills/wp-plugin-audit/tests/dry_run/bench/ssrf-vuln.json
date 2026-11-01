@@ -1,0 +1,28 @@
+{
+ "findings": [
+  {
+   "file": "ssrf-vuln.php",
+   "line_start": 7,
+   "line_end": 7,
+   "function": "fx_fetch",
+   "entry_point": "wp_ajax_nopriv_fx_fetch",
+   "cwe": "CWE-918",
+   "class": "ssrf",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_POST['url'] -> wp_remote_get (no wp_http_validate_url) -> response body returned via wp_send_json",
+   "confidence": "high"
+  },
+  {
+   "file": "ssrf-vuln.php",
+   "line_start": 9,
+   "line_end": 9,
+   "function": "fx_fetch",
+   "entry_point": "wp_ajax_nopriv_fx_fetch",
+   "cwe": "CWE-918",
+   "class": "ssrf",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_GET['u'] -> CURLOPT_URL -> curl_exec; response not returned (blind)",
+   "confidence": "high"
+  }
+ ]
+}

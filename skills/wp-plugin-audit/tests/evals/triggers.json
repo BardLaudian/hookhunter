@@ -1,0 +1,261 @@
+{
+ "description": "Activation evals for wp-plugin-audit. 'dev' prompts may be used while tuning the description; 'heldout' prompts are run once after tuning.",
+ "prompts": [
+  {
+   "id": "en-p1",
+   "lang": "en",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "dev",
+   "prompt": "Audit the WordPress plugin in ./contact-widget for security vulnerabilities."
+  },
+  {
+   "id": "en-p2",
+   "lang": "en",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "heldout",
+   "prompt": "Can you review this WordPress plugin's PHP code for XSS or SQL injection before I publish it? The source is in ./my-plugin."
+  },
+  {
+   "id": "en-p3",
+   "lang": "en",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "dev",
+   "prompt": "I'm hunting for CVEs in WordPress plugins. Go through the source in ./plugins/event-calendar and tell me what looks exploitable."
+  },
+  {
+   "id": "en-p4",
+   "lang": "en",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "heldout",
+   "prompt": "Check whether the AJAX handlers in this WordPress plugin are missing capability checks or nonces."
+  },
+  {
+   "id": "en-p5",
+   "lang": "en",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "dev",
+   "prompt": "Compare versions 2.3.1 and 2.3.2 of this WordPress plugin (both folders are here) and tell me if the security fix is complete."
+  },
+  {
+   "id": "en-p6",
+   "lang": "en",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "heldout",
+   "prompt": "Do a static security review of the PHP files in my WordPress theme."
+  },
+  {
+   "id": "en-p7",
+   "lang": "en",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "dev",
+   "prompt": "I found an unauthenticated option update in a plugin's admin-ajax handler. Write the vulnerability report for the vendor."
+  },
+  {
+   "id": "en-p8",
+   "lang": "en",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "heldout",
+   "prompt": "Which REST routes in this WordPress plugin have no permission_callback, and can they be abused?"
+  },
+  {
+   "id": "es-p1",
+   "lang": "es",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "dev",
+   "prompt": "Audita la seguridad de este plugin de WordPress, el código está en ./mi-plugin."
+  },
+  {
+   "id": "es-p2",
+   "lang": "es",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "heldout",
+   "prompt": "Revisa el código PHP de este plugin de WordPress en busca de vulnerabilidades (XSS, SQLi, CSRF)."
+  },
+  {
+   "id": "es-p3",
+   "lang": "es",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "dev",
+   "prompt": "Quiero encontrar un CVE en un plugin de WordPress. Analiza el código fuente de la carpeta ./plugin y dime qué es explotable."
+  },
+  {
+   "id": "es-p4",
+   "lang": "es",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "heldout",
+   "prompt": "¿Faltan comprobaciones de nonce o de capabilities en los endpoints AJAX de este plugin de WordPress?"
+  },
+  {
+   "id": "es-p5",
+   "lang": "es",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "dev",
+   "prompt": "Compara las versiones 1.4.2 y 1.4.3 de este plugin de WordPress y dime si el parche de seguridad está completo."
+  },
+  {
+   "id": "es-p6",
+   "lang": "es",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "heldout",
+   "prompt": "Haz una revisión estática de seguridad de mi tema de WordPress."
+  },
+  {
+   "id": "es-p7",
+   "lang": "es",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "dev",
+   "prompt": "Redacta el informe de vulnerabilidad para el fallo de autorización que encontré en un plugin de WordPress."
+  },
+  {
+   "id": "es-p8",
+   "lang": "es",
+   "group": "positive",
+   "expect_trigger": true,
+   "split": "heldout",
+   "prompt": "¿Hay inyección SQL en las consultas $wpdb de este plugin de WordPress?"
+  },
+  {
+   "id": "en-n1",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "Write a WordPress plugin that registers a custom post type called book with an archive page."
+  },
+  {
+   "id": "en-n2",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "heldout",
+   "prompt": "Refactor this PHP class to use dependency injection and add type hints."
+  },
+  {
+   "id": "en-n3",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "My WordPress site shows a white screen after I upgraded PHP to 8.3. How do I find the cause?"
+  },
+  {
+   "id": "en-n4",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "heldout",
+   "prompt": "Add a settings page to my WordPress plugin using the Settings API."
+  },
+  {
+   "id": "en-n5",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "Explain the difference between add_action and add_filter in WordPress."
+  },
+  {
+   "id": "en-n6",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "heldout",
+   "prompt": "Review this PHP pull request for PSR-12 style and naming consistency."
+  },
+  {
+   "id": "en-n7",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "Audit this Express.js app for SQL injection."
+  },
+  {
+   "id": "en-n8",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "heldout",
+   "prompt": "Harden my WordPress site: limit login attempts and fix file permissions."
+  },
+  {
+   "id": "en-n9",
+   "lang": "en",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "Scan https://example-shop.test for vulnerabilities and tell me what you find."
+  },
+  {
+   "id": "es-n1",
+   "lang": "es",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "Escribe un plugin de WordPress que añada un shortcode para mostrar el año actual."
+  },
+  {
+   "id": "es-n2",
+   "lang": "es",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "heldout",
+   "prompt": "Optimiza esta consulta SQL de un plugin de WordPress para que sea más rápida."
+  },
+  {
+   "id": "es-n3",
+   "lang": "es",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "Explícame cómo funcionan los hooks de WordPress, acciones y filtros."
+  },
+  {
+   "id": "es-n4",
+   "lang": "es",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "heldout",
+   "prompt": "Migra este código PHP 7.4 a PHP 8.3 y corrige los avisos de deprecación."
+  },
+  {
+   "id": "es-n5",
+   "lang": "es",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "Audita la seguridad de esta API en Flask (Python)."
+  },
+  {
+   "id": "es-n6",
+   "lang": "es",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "heldout",
+   "prompt": "Configura un firewall y copias de seguridad para mi servidor de WordPress."
+  },
+  {
+   "id": "es-n7",
+   "lang": "es",
+   "group": "negative",
+   "expect_trigger": false,
+   "split": "dev",
+   "prompt": "Crea tests con PHPUnit para las funciones de este plugin de WordPress."
+  }
+ ]
+}

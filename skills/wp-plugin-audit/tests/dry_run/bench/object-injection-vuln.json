@@ -1,0 +1,28 @@
+{
+ "findings": [
+  {
+   "file": "object-injection-vuln.php",
+   "line_start": 7,
+   "line_end": 7,
+   "function": "fx_prefs",
+   "entry_point": "init",
+   "cwe": "CWE-502",
+   "class": "object-injection",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_COOKIE['fx_prefs'] -> base64_decode (restores quotes) -> unserialize, no allowed_classes",
+   "confidence": "medium"
+  },
+  {
+   "file": "object-injection-vuln.php",
+   "line_start": 8,
+   "line_end": 8,
+   "function": "fx_prefs",
+   "entry_point": "init",
+   "cwe": "CWE-502",
+   "class": "object-injection",
+   "auth_required": "unauthenticated",
+   "data_flow": "$_POST['data'] -> wp_unslash (restores quotes) -> maybe_unserialize, no allowed_classes",
+   "confidence": "medium"
+  }
+ ]
+}
