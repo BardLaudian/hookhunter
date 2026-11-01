@@ -57,7 +57,7 @@ Take entry points from the top of the map (unauthenticated first). Follow reques
 
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/wp_sinks.py <dir> --class <classes> --risk unguarded` lists dangerous calls with the guards found in their arguments and function.
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/wp_xref.py <dir> <function-method-or-hook>` gives definitions, callers, registrations and callees.
-- Read each handler in full. Then Grep for what the scripts cannot see: `vendor/`, JavaScript, dynamic dispatch, `$fn()` calls, `curl_init( $url )`, `download_url`, `do_shortcode`/`do_action` with request values.
+- Read each handler in full. Then Grep for what the scripts cannot see: `vendor/`, JavaScript, and anything reached through a parameter, property or other function (the dispatch rules only follow request data inside one function).
 
 Class order and files (open the one for the class being checked, plus `reference/wp-traps.md` and `reference/sanitizers.md` when you judge a guard):
 

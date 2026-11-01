@@ -109,7 +109,7 @@ Not searched: other WordPress audit skills (only one search done). Do that befor
   To be reflected in `SKILL.md` (S3).
 - **CVSS tables.** All scores in the class files were computed with the FIRST v3.1 base formula (checked against known values 9.8, 9.9, 8.8, 7.5),
   not copied from advisories.
-- **Open items.** `wp_sinks.py` does not yet cover: `wp_create_user`, `wp_set_password`, `add_user_to_blog`, `grant_super_admin`, variable function calls,
+- **Open items (closed after S3, see section 13).** `wp_sinks.py` did not yet cover: `wp_create_user`, `wp_set_password`, `add_user_to_blog`, `grant_super_admin`, variable function calls,
   callable parameters (`array_map`, `usort`, …), `do_shortcode`/`do_action` with variable names, `curl_init( $url )`, `download_url`,
   `media_sideload_image`. The reference files list these as Grep tasks; extend the script before the S4 freeze if the dry run shows they matter.
 - **Findings status to output (decided with the maintainer, 2026-11-01).** `confirmed` is written to `findings.json` with `confidence: "high"`;
@@ -156,3 +156,11 @@ Not searched: other WordPress audit skills (only one search done). Do that befor
 
 Same 32 prompts, same runner, no change to the description between the earlier runs and these. Dev split: 8 of 8 positives, 0 of 9 false triggers. Held-out split (second use, as a rename
 regression check and not for tuning): 8 of 8 positives, 0 of 7 false triggers. Cost about 0.57 USD. Results: `skills/hookhunter/tests/evals/results-dev.json` and `results-heldout.json`.
+
+## 13. wp_sinks.py gaps closed before the freeze
+
+Added to `wp_sinks.py` and the parser: calls whose callee is an expression (`$fn()`, `$_GET['f']()`, `$o->$m()`, `A::$m()`, `new $class`) in both backends; rules `dynamic-callee`, `dynamic-class`,
+`callable-param`, `hook-dispatch`, `parse-str`, `mail-params`, `url-fetch`, `soap-client`, `account-control`, `privileged-option` and `option-name`. The dispatch rules use a one-function request-taint
+heuristic (documented in the script's help and in `reference/classes/rce.md`) so that internal callbacks are not reported. `wp_set_current_user` and `wp_set_auth_cookie` moved from `user-write` to
+`account-control` because a cast of the user id was wrongly treated as a guard. Three fixture pairs (`dynamic-call`, `url-fetch`, `account`) with tests for both backends; the dry run still covers the
+original 26 fixtures. Performance on the 1,000-file tree is unchanged in practice (4.8 s regex, 2.7 s tree-sitter for `wp_sinks.py`).

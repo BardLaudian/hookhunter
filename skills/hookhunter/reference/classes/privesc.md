@@ -29,9 +29,11 @@ Open `wp-traps.md` 7 and 8 (`nopriv` dispatch, roles live in user meta), `surfac
 
 ## 2. Operations to hunt (`wp_sinks.py --class privesc`, then Grep for the rest)
 
-`wp_sinks.py` currently lists `wp_update_user`, `wp_insert_user`, `update_user_meta`, `add_user_meta`,
-`wp_set_current_user`, `wp_set_auth_cookie`, `set_role`, `add_role`, `add_cap`, `remove_cap` and `update_option`.
-Grep for these as well; the script does not cover them:
+`wp_sinks.py` lists `wp_update_user`, `wp_insert_user`, `update_user_meta`, `add_user_meta`, `set_role`, `add_role`, `add_cap` and `remove_cap` (`user-write`, `role-change`);
+`wp_set_current_user`, `wp_set_auth_cookie`, `wp_set_password`, `reset_password`, `wp_signon`, `wp_create_user`, `add_user_to_blog`, `add_existing_user_to_blog`, `remove_user_from_blog`,
+`grant_super_admin` and `revoke_super_admin` (`account-control`, where casting the user id does not count as a guard because it does not authorise the caller); and options: `privileged-option`
+(`default_role`, `users_can_register`, `admin_email`, `siteurl`, `home`, `active_plugins`, `template`, `stylesheet`, `*user_roles`) and `option-name` (the request chooses the option written).
+Capability checks anywhere in the function count as `guarded`. Grep for what remains uncovered:
 
 | Operation | Why it matters |
 |---|---|

@@ -28,8 +28,8 @@ Core `trunk` read on 2026-11-01.
   `CURLOPT_PROTOCOLS` limits it, and follows redirects only if `CURLOPT_FOLLOWLOCATION` is set. `fsockopen()` takes a host and a port.
 - `esc_url_raw()` and `sanitize_url()` only clean characters and check the scheme; they say nothing about the host.
 - `wp_sinks.py` rules: `http-request` (`wp_remote_*`, `get_headers`, `fsockopen`), `safe-http-request` (`wp_safe_remote_*`, marked guarded),
-  `curl-url` (`curl_setopt` with `CURLOPT_URL`) and `file-read` (`file_get_contents`). `wp_sinks.py` does **not** cover `curl_init( $url )`,
-  `download_url`, `media_sideload_image`, `WP_oEmbed`, `fetch_feed`, SOAP clients or the `simplexml_*`/`DOMDocument` loaders: Grep for them.
+  `curl-url` (`curl_setopt` with `CURLOPT_URL`) and `file-read` (`file_get_contents`). `url-fetch` (`curl_init( $url )`, `download_url`, `media_sideload_image`, `fetch_feed`, `wp_oembed_get`, `wp_remote_fopen`, first argument) and `soap-client` (`new SoapClient( $wsdl )`) cover the
+  helpers added later. `wp_sinks.py` does **not** cover `WP_oEmbed` internals or the `simplexml_*`/`DOMDocument` loaders given a URL: Grep for them.
 
 ## 2. Where it lives
 

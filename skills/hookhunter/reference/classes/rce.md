@@ -35,10 +35,13 @@ PHP manual and WordPress core `trunk`, read 2026-11-01.
 - `wp_sinks.py` rules: `exec` (`eval`, `system`, `exec`, `passthru`, `shell_exec`, `proc_open`, `popen`, `pcntl_exec`, `assert`, `create_function`;
   arguments wrapped in `escapeshellarg|escapeshellcmd` count as guarded) and `dynamic-call` (`call_user_func`, `call_user_func_array`,
   `extract`; any `in_array` or `array_key_exists` call in the enclosing function counts as guarded, without checking that it is strict or that it tests the value
-  that is called). **Not covered:** variable function calls (`$fn( … )`), `new $class(…)`,
-  `$obj->$method()`, callable parameters (`array_map`, `usort`, `array_filter`, `preg_replace_callback`, `register_shutdown_function`),
-  `do_shortcode`, `do_action`/`apply_filters` with a variable name, `parse_str`, `mail`, `putenv`, and template engines. The regex fallback backend also
-  misses backtick shell execution. Grep for these.
+  that is called). Added later: `dynamic-callee` (`$fn( … )`, `$_GET['f']( … )`, `$o->$m()`, `A::$m()`), `dynamic-class` (`new $class`), `callable-param` (the callable of
+  `array_map`, `array_filter`, `usort`, `preg_replace_callback`, `register_shutdown_function`, `add_action`/`add_filter` and similar), `hook-dispatch` (`do_action`, `apply_filters`,
+  `do_shortcode` with a request-chosen name or content), `parse-str` (one argument) and `mail-params` (fifth argument). These dispatch rules report `unguarded` only when the value is
+  request-derived within the same function (a superglobal, a REST accessor, `php://input`, a stored-option read, or a variable assigned from one; a value read from a server-side array
+  indexed by the request is not tainted), and `constant` otherwise; an `in_array`/`array_key_exists` call in the function counts as `guarded`. The taint is a one-function heuristic: it does
+  not follow parameters, properties or other functions, so check callers with `wp_xref.py`. **Not covered:** `putenv`, template engines, and backtick shell execution in the regex fallback
+  backend. Grep for these.
 
 ## 2. Where it lives
 
