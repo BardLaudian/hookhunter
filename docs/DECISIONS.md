@@ -1,0 +1,98 @@
+# Decisions and Phase 0 findings
+
+Phase 0 (no code). Date: 2026-11-01. Items marked **UNVERIFIED** came only from search snippets or
+third-party pages and must be confirmed before they are relied on.
+
+## 1. Plugin source download
+- **Verified** (HTTP 200, `akismet` 5.0): `https://downloads.wordpress.org/plugin/<slug>.<version>.zip`
+  (zip, `Last-Modified` present), `https://plugins.svn.wordpress.org/<slug>/tags/<version>/`, and
+  `https://api.wordpress.org/plugins/info/1.0/<slug>.json`.
+- Decision: zip is primary (single artefact, hashable). SVN tags are the fallback and the way to
+  list versions. Caveat: closed/removed plugins disappear from both; a case needs both versions
+  downloadable at fetch time (already a DATASET.md criterion).
+- Caveat: the SHA-256 is of the zip. wordpress.org may regenerate zips, so a hash mismatch on
+  re-download must be treated as "re-verify", not silently accepted. Consider also hashing the
+  unpacked tree.
+
+## 2. Vulnerability data sources
+- **Wordfence Intelligence:** v1/v2 of the feed carried a notice that they would be disabled on
+  2026-03-09; v3 needs a free API key from a wordfence.com account. Terms (updated 2026-01-26):
+  free, keys are confidential and not transferable. Rate limits are not published. **UNVERIFIED:**
+  the current v3 terms on redistribution. Decision: store only IDs, URLs and our own labels, never
+  a copy of the feed.
+- **WPScan:** free tier 25 requests/day, custom licence that requires a fee for commercial use.
+  **UNVERIFIED** (partly from a 2021 snapshot). Decision: use only as a manual cross-reference.
+- NVD for CVE metadata (no key needed for light use). Patchstack: not checked.
+
+## 3. Claude Code headless
+Local CLI: `claude 2.1.316`. Confirmed from `claude --help`:
+`-p/--print`, `--output-format text|json|stream-json`, `--allowedTools`, `--disallowedTools`,
+`--tools` (restricts the built-in set; `""` disables all), `--model`, `--max-budget-usd`,
+`--no-session-persistence`, `--setting-sources`, `--settings`, `--strict-mcp-config`,
+`--disable-slash-commands`, `--permission-mode`, `--add-dir`, `--plugin-dir`, `--bare`,
+`--restricted`, `--effort`.
+- Decision: restrict tools with `--tools "Read,Grep,Glob"` (removes Bash/web from the set) rather than
+  only `--allowedTools`, which just pre-approves. Also pass `--strict-mcp-config`,
+  `--setting-sources project` (or `--bare`) and `--no-session-persistence` so user settings,
+  global CLAUDE.md and memory don't leak between conditions.
+- **Conflict to resolve in Phase 3:** SKILL-DESIGN.md gives the skill `Bash(python3 …/scripts/*)`
+  but CLAUDE.md and SPEC.md say agent runs have no Bash. Condition C-full needs a scoped Bash, so
+  either Bash is allowed only for those scripts (and A/B/C-min lose nothing but Bash) or the
+  scripts can't run in the harness. This must be decided before Phase 3 (see open questions).
+- Skills: project skills live in `.claude/skills/<name>/SKILL.md`; `${CLAUDE_SKILL_DIR}` resolves to
+  the skill folder and is substituted in skill markdown and in `allowed-tools` Bash rules; the skill
+  `allowed-tools` grant applies only to the turn that invokes the skill. Sources: Claude Code docs
+  (skills page). **UNVERIFIED locally:** exact discovery with `-p`, and whether skills are
+  auto-invoked in headless mode. Needs a 5-minute empirical test in Phase 3 with a dummy skill
+  (this is the one thing that would silently invalidate conditions B/C if wrong).
+- Name clash: SPEC says B copies the skill to `.claude/skills/wp-plugin-triage/`, but a
+  `wp-plugin-triage` skill is also installed in this environment's user scope. The harness must
+  isolate the user scope (`--setting-sources project`/`--bare`, clean `HOME`) or condition A is contaminated.
+- JSON output: community sources list `result`, `session_id`, `duration_ms`, `num_turns`,
+  `total_cost_usd`; token usage fields **UNVERIFIED**. Check with one real call in Phase 3.
+
+## 4. Container network
+- `--network none` blocks the model API too. Anthropic's reference devcontainer uses a default-deny
+  firewall (`init-firewall.sh`, needs `NET_ADMIN`/`NET_RAW`) with an allowlist that includes more
+  than `api.anthropic.com` (npm, GitHub, telemetry hosts).
+- Decision: custom allowlist limited to the API endpoint (plus whatever Claude Code strictly needs,
+  found by test; telemetry can be disabled by env var). Alternative: a user-defined Docker network
+  with an egress proxy that allows only the API host. Docs warn this does not stop exfiltration of
+  reachable data, which is acceptable because the mounted plugin code is public.
+- Docker is present at `/usr/bin/docker`; semgrep is not installed.
+
+## 5. Model
+- `claude-sonnet-5-5` (Sonnet 5.5). Training data cutoff **June 2026**, reliable knowledge cutoff
+  June 2026 (Claude Platform docs, models overview). Cases for `after_cutoff = true` must be
+  published after 2026-06-30, so with today's date (2026-11-01) there is a window of about four
+  months of CVEs. This limits the number of clean cases; expect many flagged older cases and rely
+  on the memorisation probe.
+- Open: the model that will actually be used for the experiment is the user's call; record it
+  in every run regardless.
+
+## 6. Prior art (does something already answer our question?)
+| Work | What it does | How we differ |
+|---|---|---|
+| Tashenova et al., *A Real CVE-Backed Benchmark for WordPress Plugin Vulnerability Detection*, Big Data Cogn. Comput. 2026, 10(9), 303; repo `Aisultan05/wordpress-cve-benchmark` | 1,757 plugin CVEs, function-level labels from vuln→patch diffs, leakage-controlled splits; evaluates static and learned detectors (best macro-F1 0.601) | Function classification of learned models, not an agent reading a whole plugin; no skill ablation. Possible source of candidate CVEs and a method to cite. |
+| Jungnickel and Neef, *Evaluating LLMs for Real-World Web Vulnerability Detection*, arXiv 2606.21397 | Six LLMs on four WP plugins with known vulns; Opus 4.6 about 63 % detection, many false positives, inconsistent across runs (figures from a conference page, not the paper) | Compares models and prompts on 4 plugins; we compare skill vs no skill, with negative controls, ablations and CIs on 40 cases. Closest competitor; read it fully before Phase 1. |
+| CVE-Bench (arXiv 2503.17332) | Agents *exploiting* web-app CVEs, including WP plugins | Exploitation in a running app; we are static-only. |
+| RealVul (EMNLP 2024) | LLM framework for PHP vulnerability detection | Method, not an agent-skill evaluation. |
+| nullcon 2022 *Raining CVEs on WordPress plugins with Semgrep*; CodeVigilant semgrep rules (117 rules, 30 WP-specific) | Public Semgrep rules for WP | Candidate for condition D. |
+| Wpsec blog and Medium posts on hunting WP CVEs with Claude and Semgrep | Anecdotal workflows | No measurement. |
+
+**Conclusion:** nothing found measures *whether a skill improves* an agent's recall, precision and
+cost against a no-skill baseline on WordPress plugins, so the project is not redundant. The
+neighbouring work (above all arXiv 2606.21397) means we must position it as "skill effect", not "LLMs can find WP bugs".
+Not searched: other WordPress audit skills (only one search done). Do that before S2.
+
+## 7. Condition D (non-LLM baseline)
+- A usable public rule set exists (CodeVigilant, plus the Semgrep registry PHP rules; the content of
+  an official WordPress ruleset was not confirmed). Decision: keep D as optional; run it only after
+  Phase 3, pin the rule set by commit, and report its output as file/line findings mapped to the same
+  schema. Drop it if the rules produce thousands of findings per plugin.
+
+## 8. Open questions for the user
+1. Scoped Bash for the skill scripts in C-full (see §3), or no-Bash everywhere?
+2. Model for the experiment: Sonnet 5.5 (cheapest 5.x) or a stronger one?
+3. Wordfence v3 key: are you willing to create one (and read its terms) before Phase 2?
+4. `docs/v0.2.1/` and `docs/v0.3/` describe a different project (ghostrules). Move or ignore?
