@@ -112,3 +112,7 @@ Not searched: other WordPress audit skills (only one search done). Do that befor
 - **Open items.** `wp_sinks.py` does not yet cover: `wp_create_user`, `wp_set_password`, `add_user_to_blog`, `grant_super_admin`, variable function calls,
   callable parameters (`array_map`, `usort`, …), `do_shortcode`/`do_action` with variable names, `curl_init( $url )`, `download_url`,
   `media_sideload_image`. The reference files list these as Grep tasks; extend the script before the S4 freeze if the dry run shows they matter.
+- **Findings status to output (decided with the maintainer, 2026-11-01).** `confirmed` is written to `findings.json` with `confidence: "high"`;
+  `needs-dynamic-check` is written with `"medium"` or `"low"` depending on how much of the chain is unverified; `refuted` is not written.
+  `docs/SPEC.md` section 4 shows only `"high"` as an example of `confidence`, so the three-value set is a proposal to confirm in S3 and to add to the schema.
+  Recall@3 ranks by this field, so the choice affects the benchmark.
