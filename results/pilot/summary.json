@@ -23,45 +23,45 @@
   },
   {
    "condition": "B",
-   "vuln_runs": 1,
+   "vuln_runs": 4,
    "fixed_runs": 0,
-   "cases": 1,
-   "recall": 1.0,
+   "cases": 4,
+   "recall": 0.75,
    "recall_ci": [
-    1.0,
+    0.25,
     1.0
    ],
-   "recall_at_3": 0.0,
+   "recall_at_3": 0.25,
    "false_alarm_rate": null,
    "false_alarm_cases": 0,
-   "findings_per_vuln_run": 9.0,
-   "unmatched_per_vuln_run": 8.0,
-   "cost_usd": 0.026512890000000004,
-   "cost_per_hit": 0.026512890000000004,
-   "mean_cost_per_run": 0.026512890000000004,
-   "skill_invoked_rate": 0.0,
-   "mean_turns": 25.0
+   "findings_per_vuln_run": 5.0,
+   "unmatched_per_vuln_run": 3.5,
+   "cost_usd": 0.35511529000000003,
+   "cost_per_hit": 0.11837176333333334,
+   "mean_cost_per_run": 0.08877882250000001,
+   "skill_invoked_rate": 0.25,
+   "mean_turns": 48.0
   },
   {
    "condition": "C-full",
-   "vuln_runs": 1,
+   "vuln_runs": 4,
    "fixed_runs": 0,
-   "cases": 1,
-   "recall": 1.0,
+   "cases": 4,
+   "recall": 0.75,
    "recall_ci": [
-    1.0,
+    0.25,
     1.0
    ],
-   "recall_at_3": 0.0,
+   "recall_at_3": 0.5,
    "false_alarm_rate": null,
    "false_alarm_cases": 0,
-   "findings_per_vuln_run": 4.0,
-   "unmatched_per_vuln_run": 3.0,
-   "cost_usd": 0.016983269999999998,
-   "cost_per_hit": 0.016983269999999998,
-   "mean_cost_per_run": 0.016983269999999998,
+   "findings_per_vuln_run": 3.25,
+   "unmatched_per_vuln_run": 2.5,
+   "cost_usd": 0.34906187499999997,
+   "cost_per_hit": 0.11635395833333333,
+   "mean_cost_per_run": 0.08726546874999999,
    "skill_invoked_rate": 1.0,
-   "mean_turns": 22.0
+   "mean_turns": 47.0
   }
  ],
  "differences": [
@@ -73,7 +73,7 @@
     0.0,
     0.0
    ],
-   "paired_cases": 1
+   "paired_cases": 4
   },
   {
    "condition": "C-full",
@@ -83,7 +83,7 @@
     0.0,
     0.0
    ],
-   "paired_cases": 1
+   "paired_cases": 4
   }
  ],
  "unsigned_cases_skipped": [],
@@ -244,19 +244,19 @@
    "not_in_sample": 0
   },
   "B": {
-   "matched": 1,
+   "matched": 6,
    "fp": 0,
    "plausible": 0,
    "real-but-other": 0,
-   "unlabelled": 8,
+   "unlabelled": 14,
    "not_in_sample": 0
   },
   "C-full": {
-   "matched": 1,
+   "matched": 3,
    "fp": 0,
    "plausible": 0,
    "real-but-other": 0,
-   "unlabelled": 3,
+   "unlabelled": 10,
    "not_in_sample": 0
   }
  },
