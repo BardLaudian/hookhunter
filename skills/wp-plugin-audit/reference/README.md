@@ -53,8 +53,7 @@ a refutation checklist, typical CVSS, and what triagers reject. `test_reference.
   Patchstack's Alliance rules were read in full and are quoted.
 - **Scripts** (`scripts/`) do not parse `vendor/`, JavaScript, or non-PHP entry points, and the regex fallback misses backtick execution. Each class file lists what to Grep instead.
   Known gaps are recorded in `docs/DECISIONS.md` section 9.
-- **Open points for S3:** `SKILL.md` must fix the `findings.json` value sets for `confidence` and `auth_required` (`docs/DECISIONS.md`), and include `xxe` in the class order
-  (the order in `docs/SKILL-DESIGN.md` section 2 step 2 omits it).
+- **Fixed in S3:** `SKILL.md` sets the value sets of `class`, `auth_required` and `confidence` in the findings schema (`schemas/findings.schema.json`) and includes `xxe` in the class order.
 - **Not yet exercised:** no benchmark case has been run against these files. They are frozen with the skill at tag `skill-v1.0` and change afterwards only through Phase 6 of the plan.
 
 ## Maintaining the files

@@ -5,6 +5,6 @@ add_action( 'init', 'fx_prefs' );
 
 function fx_prefs() {
 	$prefs = unserialize( base64_decode( $_COOKIE['fx_prefs'] ) ); // VULN
-	$data  = maybe_unserialize( $_POST['data'] ); // VULN
+	$data  = maybe_unserialize( wp_unslash( $_POST['data'] ) ); // VULN
 	return array( $prefs, $data );
 }

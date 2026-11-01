@@ -124,7 +124,7 @@ a logic consequence of the code rather than something core documents, or *(PHP)*
   capability and nonce for free (see `surface.md`), so the finding is usually the *value*, not access.
   Admin-only stored XSS is often rejected by triagers; see `severity.md`.
 
-## D. PHP behaviour that WordPress code leans on
+## D. PHP and WordPress runtime behaviour
 
 ### 16. Loose comparison and string equality for secrets
 - *(PHP)* `==` between strings that look numeric compares them as numbers (`"0e12" == "0e34"`), so
@@ -144,6 +144,16 @@ a logic consequence of the code rather than something core documents, or *(PHP)*
   rewrites them. Rate limits, IP allow-lists and "local only" checks that read them are bypassable.
 - **Grep:** `HTTP_X_FORWARDED_FOR|HTTP_CLIENT_IP|HTTP_X_REAL_IP`. `REMOTE_ADDR` is the peer address.
 
+### 19. Request data arrives slashed, so quote-bearing payloads break
+- `wp_magic_quotes()` runs `addslashes()` over the strings in `$_GET`, `$_POST`, `$_COOKIE` and `$_SERVER` and rebuilds `$_REQUEST` (trap 9; `sqli.md`).
+- *(consequence of that code)* Payloads that need quote characters arrive with each `"` or `'` backslash-escaped: serialized PHP (`O:3:"Foo":…`), XML with attributes or entity
+  declarations, JSON, PHP code strings, SQL string literals. Passed straight from those superglobals to `unserialize`, an XML parser, `json_decode` or a quoted SQL
+  string they fail to parse or stay inside their quotes. Payloads without quotes are unaffected: path traversal, shell metacharacters, numeric SQL, URLs, HTML without quoted attributes.
+- Exploitation of a quote-dependent class therefore needs a step that restores the quotes: `wp_unslash`, `stripslashes`, `stripslashes_deep`, a decoder (`base64_decode`, `urldecode`,
+  `hex2bin`), or an unslashed source (`php://input`, REST parameters, `$_FILES`, database values).
+- **Check:** before confirming `sqli` (quoted position), `object-injection`, `xxe` or `rce` by code string, point at the line that restores the quotes. If there is none the candidate is
+  `refuted` (`source-still-slashed`); if a filter or wrapper might unslash, `needs-dynamic-check`.
+
 ## Refutation shortcuts
 
 Before dismissing a candidate because of a guard, ask which of these applies:
@@ -152,6 +162,7 @@ Before dismissing a candidate because of a guard, ask which of these applies:
 3. Is the capability the right one, and tied to the object when one is involved (5)?
 4. Does the code run for logged-out visitors, and is it the same function as the `nopriv` hook (7)?
 5. Is the site type relevant: multisite, `DISALLOW_UNFILTERED_HTML` (6)?
+6. Does a quote-dependent payload arrive slashed with nothing to restore the quotes (19)?
 
 ## Sources
 

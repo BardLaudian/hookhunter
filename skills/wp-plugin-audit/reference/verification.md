@@ -35,7 +35,7 @@ Stop at the first check that refutes. Record which one.
    `permission_callback`, menu capability, shortcode, request-time hook. Look for **upstream** gating: an early `return`/`wp_die` in a base-class constructor or an earlier
    hook, a `permission_callback` that really denies (`authz.md`, strict `false`/`null`/`WP_Error`), a role map.
 3. **The attacker controls the value.** Follow the source to the sink. Is it cast, narrowed to a fixed list, read from a field only privileged users can write, or
-   replaced by a server-side value? Is it still slashed (`sqli.md`)? Does `wp_unslash` remove protection?
+   replaced by a server-side value? Is it still slashed? Payloads that need quotes (SQL strings, serialized data, XML, JSON, code strings) need a step that restores them (`wp-traps.md` 19; `sqli.md`).
 4. **Guards on every path.** Capability, nonce, other checks: before the first side effect, on all branches, and **stopping execution** on failure (`wp-traps.md` 4 and 10).
    Look one call down (`wp_map.py` `callee`) and in parents and hooks.
 5. **Guard adequacy.** For escapers, sanitisers, validators: does this function neutralise this class **in this context** for **the value that reaches the sink**
@@ -62,6 +62,7 @@ One-line reasons for `refuted` (use one, add the location):
 | `dead-code` | never loaded or registered |
 | `not-reachable` | the claimed tier cannot reach it (upstream gate, wrong hook, real `permission_callback`) |
 | `source-not-controlled` | fixed, cast, allow-listed, or written only by trusted code |
+| `source-still-slashed` | a quote-dependent payload arrives slashed and nothing restores the quotes |
 | `guard-capability` / `guard-nonce` | a check fits the action, runs first on every path, and stops execution |
 | `guard-escape-context` | escaped for this exact context at output |
 | `guard-prepared` / `guard-cast` / `guard-allowlist` | parameterised, narrowed, or limited to a fixed list |

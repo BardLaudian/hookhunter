@@ -65,6 +65,9 @@ Core `trunk` read on 2026-11-01; PHP manual read on the same day.
 - **`allowed_classes` is not a guarantee.** A list that includes a class with a useful magic method is still a chain; `false` stops
   instantiation of classes but the PHP manual still says not to pass untrusted input. Prefer `json_decode()`.
 - **`maybe_unserialize()` on request data.** It looks like a WordPress helper; it is an unrestricted `unserialize`.
+- **Slashed input does not unserialize.** A serialized string contains double quotes, and `$_GET`, `$_POST`, `$_COOKIE` and `$_REQUEST` values arrive with them backslash-escaped
+  (`wp-traps.md` 19), so `unserialize( $_POST['x'] )` fails. It becomes exploitable after `wp_unslash`/`stripslashes`, after a decoder such as `base64_decode`, or from an unslashed source.
+  A cookie that is `base64_decode`d first is not affected.
 - **Encoding is not a defence.** `base64_decode`, `gzuncompress`, `urldecode`, and `hex2bin` in front of `unserialize` only hide the string.
 - **Fake integrity checks.** `md5( $data ) === $hash` where the attacker supplies both, an HMAC with a key that is hard-coded, empty or
   predictable (`wp-traps.md` 17), or comparison with `==` (`wp-traps.md` 16).
@@ -111,6 +114,7 @@ Mark `refuted` and record which holds:
 3. The call is `json_decode`, or the data format is not PHP serialization.
 4. The entry point is not reachable at the claimed tier, or is dead code (`wp_xref.py`).
 5. Only an administrator can supply the string and nothing is escalated.
+6. The string comes straight from `$_GET`/`$_POST`/`$_COOKIE`/`$_REQUEST` and nothing restores its quotes (`source-still-slashed`).
 
 Not finding a gadget does **not** refute the bug: gadget availability depends on every other active plugin and theme. Mark it
 `needs-dynamic-check` and record where you searched (plugin, `vendor/`, core).

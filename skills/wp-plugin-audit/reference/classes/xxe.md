@@ -53,6 +53,9 @@ PHP manual and OWASP read on 2026-11-01; core `trunk` read on the same day.
 
 - **`LIBXML_NOENT` copied from a tutorial** to "get entities replaced" in a normal document, on input that a user can influence.
 - **`LIBXML_DTDLOAD | LIBXML_DTDATTR`** for "validation", or `LIBXML_DTDVALID`.
+- **Slashed input breaks the document.** XML entity declarations and attribute values need quotes, and request values from `$_POST`/`$_GET`/`$_REQUEST` arrive with them backslash-escaped
+  (`wp-traps.md` 19), so `simplexml_load_string( $_POST['x'], …, LIBXML_NOENT )` does not parse such documents. Exploitation needs `wp_unslash`, a decoder, or an unslashed source
+  (`php://input`, an uploaded file, a REST body).
 - **`LIBXML_NONET` as the only protection.** It stops network fetches, not `file://` or `php://filter` entities that read local files.
 - **`libxml_disable_entity_loader( true )` as the only protection.** It is deprecated since PHP 8.0 and the manual says "relying on this function is highly discouraged". It is meaningful for code that must run on PHP below 8.0 with an old libxml; on current PHP use default flags or the resolver callback from OWASP.
 - **Entity resolver callback set and unset.** A callback installed for one document and removed before parsing another.
@@ -92,7 +95,8 @@ Mark `refuted` and record which holds:
 3. The XML string never comes from a source the attacker controls (plugin-generated data, a file in a directory the attacker cannot write, a trusted configuration).
 4. The entry point is unreachable at the claimed tier, or is dead code (`wp_xref.py`).
 5. Only an administrator can supply the XML and nothing is escalated.
-6. The library parser in use sets safe options (read its source or documentation for the installed version); if unknown, mark `needs-dynamic-check`.
+6. The XML comes straight from `$_GET`/`$_POST`/`$_REQUEST` and nothing restores its quotes (`source-still-slashed`).
+7. The library parser in use sets safe options (read its source or documentation for the installed version); if unknown, mark `needs-dynamic-check`.
 
 `confirmed` needs file:line for the entry point, the parse call with its exact flags, the request value that becomes the XML, and what an entity could reach (file read, URL, denial of service).
 
