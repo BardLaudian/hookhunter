@@ -34,6 +34,8 @@ Fix 1.7.21 turns both into LIKE %s with the value as a prepare() argument.
 Draft: not yet confirmed that getUserValues() does not already restrict the email (advisory mentions is_email).
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-01"
 
 [[case]]
 id = "wp-0002"
@@ -67,6 +69,8 @@ includes/core/class-ws-form-submit.php:3220 and :3544, api/class-ws-form-api-sub
 Draft: reviewer must decide the primary label (central sink vs. submit-meta.php:200) and whether the others count as extra locations.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-01"
 
 [[case]]
 id = "wp-0003"
@@ -99,6 +103,8 @@ Root cause is the missing authorization in eval_shortcode() (~line 940-959); 4.6
 Draft: label placed on the sink; the reviewer should decide whether eval_shortcode (same file) is the better anchor.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-01"
 
 [[case]]
 id = "wp-0004"
@@ -131,6 +137,8 @@ Fix 1.2.4: allow-list ALLOWED_USER_META_KEYS, requires promote_users, string-onl
 Draft: wp_delete_user_meta / wp_assign_user_role are secondary locations, not separate labels.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-01"
 
 [[case]]
 id = "wp-0005"
@@ -163,6 +171,8 @@ Fix 9.3.9: esc_html($message) and esc_html($admin_message), and wp_die() replace
 Draft: exploitation needs a logged-in administrator to follow the link (admin-only branch); reviewer to confirm data_flow entry details (action parameter names not traced).
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-01"
 
 [[case]]
 id = "wp-0006"
@@ -195,3 +205,5 @@ Fix 5.0.3: handler needs a valid nonce or an access_key (print_window ~line 989)
 Draft: not traced - which document types are reachable after the check, and whether guest access is on by default.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-01"
