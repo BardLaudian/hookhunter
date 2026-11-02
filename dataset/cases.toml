@@ -966,3 +966,274 @@ Fix 1.3.8 adds is_safe_external_url() (wp_http_validate_url, http/https only, pr
 Draft.
 """
 drafted_by = "claude"
+
+[[case]]
+id = "wp-0032"
+cve = "CVE-2025-14632"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2025-14632"
+retrieved = "2026-11-02"
+slug = "filr-protection"
+vuln_version = "1.2.11"
+fixed_version = "1.2.12"
+vuln_sha256 = "b115ce34eee57471b165d4876c155264af2f7a680ec4d228a3c764411b572479"
+fixed_sha256 = "f9a07ca7fc0218404234b30bd9aeec7cfc9ece7f4fb77aa9dcd1a1304f50211f"
+cwe = "CWE-434"
+class = "file-upload"
+auth = "admin"
+published = "2026-01-17"
+after_cutoff = false
+
+[case.truth]
+file = "src/class-filr-uploader.php"
+function = ""
+line_start = 8
+line_end = 12
+entry_point = "Filr uploader used when creating or editing a 'filr' post (administrator); default_options of FILR_Uploader"
+data_flow = "uploaded file name -> disallowedExtensions blocklist (php, js, sql, phar... but not html/htm) -> html file stored and served from the uploads directory -> JavaScript runs for visitors"
+notes = """
+Fix 1.2.12 adds 'html' and 'htm' to the blocklist (a single line). The sink is the incomplete default list; the check itself is in validate() (line 256).
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0033"
+cve = "CVE-2026-7537"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-7537"
+retrieved = "2026-11-02"
+slug = "mobile-dj-manager"
+vuln_version = "1.7.8.3"
+fixed_version = "1.7.8.4"
+vuln_sha256 = "8e916509e0b20fcf961e4d3b186e101fe86ee16b65dfa101de5e7eb840e1f41d"
+fixed_sha256 = "215472846f4a3e0339c8149550ff8aeb185e5c87d62b1a212424fccdfd61f01d"
+cwe = "CWE-434"
+class = "file-upload"
+auth = "admin"
+published = "2026-06-06"
+after_cutoff = false
+
+[case.truth]
+file = "includes/admin/communications/comms-functions.php"
+function = "mdjm_send_comm_email"
+line_start = 231
+line_end = 255
+entry_point = "admin communications form (administrator), file field mdjm_email_upload_file"
+data_flow = "$_FILES['mdjm_email_upload_file']['name'] -> $upload_dir['path'] . '/' . $file_name (no extension, MIME or name sanitising) -> move_uploaded_file() into uploads"
+notes = """
+Fix 1.7.8.4 checks the extension against MDJM_BLOCKED_UPLOAD_EXTS and uses sanitize_file_name().
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0034"
+cve = "CVE-2026-9013"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-9013"
+retrieved = "2026-11-02"
+slug = "bogo"
+vuln_version = "3.9.1"
+fixed_version = "3.9.2"
+vuln_sha256 = "993942decbc235c517ed2d189d81508b89284190a9b7bc74bf111acb94297073"
+fixed_sha256 = "aaccf97bf89eed6dda4ceae517a98a4f308088aeec0b64e4ef0d8d59af565e66"
+cwe = "CWE-862"
+class = "missing-authz"
+auth = "subscriber"
+published = "2026-06-19"
+after_cutoff = false
+
+[case.truth]
+file = "includes/rest-api.php"
+function = "bogo_rest_create_post_translation"
+line_start = 174
+line_end = 215
+entry_point = "REST POST bogo/v1/posts/<id>/translations; permission_callback only checks bogo_access_locale"
+data_flow = "request id -> get_post($post_id) with no capability check on that post -> bogo_duplicate_post() -> the duplicate is returned with title.raw, content.raw, excerpt.raw and the password of private, draft or protected posts"
+notes = """
+Fix 3.9.2 adds, in the route's permission_callback (lines 31-60), a check that the user may create posts of that type, and reorders the localizable-post-type check.
+The label points at the callback that returns the data; the missing check is in the permission callback.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0035"
+cve = "CVE-2026-7046"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-7046"
+retrieved = "2026-11-02"
+slug = "nex-forms-express-wp-form-builder"
+vuln_version = "9.1.12"
+fixed_version = "9.1.13"
+vuln_sha256 = "918308b4d8060c3c1c6a3f44e9db09e3cd4b3039f09c54a6fc668b968771852f"
+fixed_sha256 = "56c9aee242cf479990d7cd39b9054610df77e0c84025e11482b2a99bba3fb366"
+cwe = "CWE-89"
+class = "sqli"
+auth = "admin"
+published = "2026-05-15"
+after_cutoff = false
+
+[case.truth]
+file = "includes/classes/class.dashboard.php"
+function = "get_table_records"
+line_start = 4216
+line_end = 4222
+entry_point = "admin AJAX in the NEX-Forms dashboard with POST parameter table (administrator)"
+data_flow = "$_POST['table'] -> $wpdb->prepare('%s', esc_sql(...)) then str_replace(\"'\", '') -> used as a table name in queries (prepare() with %s cannot quote an identifier)"
+notes = """
+Fix 9.1.13 builds an allow-list of known tables (plus report tables) and sanitize_key()s the input.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0036"
+cve = "CVE-2026-2471"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-2471"
+retrieved = "2026-11-02"
+slug = "wp-mail-logging"
+vuln_version = "1.15.0"
+fixed_version = "1.16.0"
+vuln_sha256 = "1fb80a1cb3ccd0ee2c21b6ec2d4c02fc21ff5223536c16c06bb87c66d4138a0c"
+fixed_sha256 = "cf1b1fb3093cef6880ff0f554270ff7b9ea3fe5ec27dceb11419e31b389a462a"
+cwe = "CWE-502"
+class = "object-injection"
+auth = "unauthenticated"
+published = "2026-02-28"
+after_cutoff = false
+
+[case.truth]
+file = "lib/vendor/brandonwamboldt/wp-orm/src/BaseModel.php"
+function = "__construct"
+line_start = 33
+line_end = 41
+entry_point = "a mail sent through any public form (for example Contact Form 7) is logged; the log message is read back and viewed by an administrator"
+data_flow = "mail log field in the database (attacker-controlled double-serialized value) -> BaseModel::__construct() -> maybe_unserialize($value) -> object injection when an admin opens the log"
+notes = """
+The sink is in the bundled wp-orm library (path contains 'vendor'; harness copies it, but the usual source-size count skips it). Fix 1.16.0 does the unserialize inside src/Model/WPML_Mail.php::__construct (lines 89-115) with allowed_classes=false.
+Draft: if the dataset excludes bundled libraries from labels, this case should be dropped.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0037"
+cve = "CVE-2026-2375"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-2375"
+retrieved = "2026-11-02"
+slug = "app-builder"
+vuln_version = "5.5.10"
+fixed_version = "5.6.0"
+vuln_sha256 = "a45e25397402fcd62ea10a02c5596fed39056e35fd0c97b2a7dfc0c52c9f813a"
+fixed_sha256 = "b11fef9ee426445b823bc893d62bbedd51fcc036f5dc7eef929d4662b31b5f32"
+cwe = "CWE-269"
+class = "privesc"
+auth = "unauthenticated"
+published = "2026-03-21"
+after_cutoff = false
+
+[case.truth]
+file = "includes/Di/Service/Auth/AuthTrails.php"
+function = "verify_role"
+line_start = 80
+line_end = 85
+entry_point = "REST registration route of App Builder, role parameter, unauthenticated"
+data_flow = "request role -> verify_role() whitelists 'wcfm_vendor' next to subscriber and customer -> wp_insert_user() with that role, bypassing WCFM Marketplace vendor approval"
+notes = """
+Fix 5.6.0 only allows wcfm_vendor when WCFM Marketplace is active and vendor auto-approval is on.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0038"
+cve = "CVE-2026-12111"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-12111"
+retrieved = "2026-11-02"
+slug = "appointment-booking-calendar"
+vuln_version = "1.4.01"
+fixed_version = "1.4.02"
+vuln_sha256 = "e13ab5ccdd996d9a7c31a0ce8ea30517fbccae9f1f2d35db65d1f230343d482d"
+fixed_sha256 = "13c2404fc87f2443ae650919f10f63683b143d56f1a7c07cbe26fba50f617218"
+cwe = "CWE-200"
+class = "info-disclosure"
+auth = "contributor"
+published = "2026-06-18"
+after_cutoff = false
+
+[case.truth]
+file = "inc/cpabc_apps_go.inc.php"
+function = "cpabc_appointments_calendar_load2"
+line_start = 938
+line_end = 975
+entry_point = "wp-admin request with cpabc_calendar_load2=1 and id=<calendar>; the check is is_admin() and current_user_can('edit_posts'), available to contributors"
+data_flow = "GET id (any calendar) -> queries the calendar config and booking rows without a per-calendar ownership check -> bookings returned"
+notes = """
+Fix 1.4.02 adds a per-calendar ownership check in the export path (cpabc_apps_go.inc.php:781) and a content_save_pre filter that strips the list shortcode for non-administrators; the advisory names calendar_load2(), which is the labelled function.
+Draft: whether the ownership fix also lands inside calendar_load2() was not traced.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0039"
+cve = "CVE-2024-11976"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2024-11976"
+retrieved = "2026-11-02"
+slug = "buddypress"
+vuln_version = "14.3.3"
+fixed_version = "14.3.4"
+vuln_sha256 = "969f6844ae8caf76158612325d556033941aa1f97d87e2e037f036f2b206f362"
+fixed_sha256 = "c9bad2b325df9a6b7bcd43513d1848c7d22efe226b8fb2b0fada129fbacf8ff5"
+cwe = "CWE-94"
+class = "rce"
+auth = "unauthenticated"
+published = "2026-01-23"
+after_cutoff = false
+
+[case.truth]
+file = "bp-core/bp-core-functions.php"
+function = "bp_core_setup_message"
+line_start = 1644
+line_end = 1652
+entry_point = "any request carrying the bp-message cookie, unauthenticated"
+data_flow = "$_COOKIE['bp-message'] (stripslashes only) -> $bp->template_message -> rendered through bp_core_render_message() which runs do_shortcode -> arbitrary shortcode execution"
+notes = """
+Fix 14.3.4 returns early for logged-out users and applies strip_shortcodes() to the cookie. The release also changes unrelated notifications bulk-manage code: not labelled.
+Draft: the do_shortcode call was not traced; it is described by the advisory.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0040"
+cve = "CVE-2026-1294"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-1294"
+retrieved = "2026-11-02"
+slug = "image-viewer"
+vuln_version = "1.0.2"
+fixed_version = "1.0.3"
+vuln_sha256 = "ab387e94f48dfafc5477252f1ad149b8fd518356121f1c9fda4a30cfcfd42961"
+fixed_sha256 = "ab297f4f52afee6db82bb5f43eeaa58b5ce72ebb7c57c48f13328d052944cc7d"
+cwe = "CWE-918"
+class = "ssrf"
+auth = "unauthenticated"
+published = "2026-02-05"
+after_cutoff = false
+
+[case.truth]
+file = "image-viewer-block.php"
+function = "__construct"
+line_start = 8
+line_end = 25
+entry_point = "REST GET /wp-json/bpivb/v1/image-proxy?url=..., no permission_callback"
+data_flow = "request param url -> wp_remote_get($url) with no validation -> body and content-type echoed to the caller"
+notes = """
+Fix 1.0.3 rewrites the main file (the diff is mostly a rewrite) and adds URL validation and an authorization check to the route.
+Draft.
+"""
+drafted_by = "claude"
