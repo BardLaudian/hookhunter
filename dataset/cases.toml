@@ -237,6 +237,8 @@ Fix 2.13.5 wraps the value in esc_textarea() and the title in esc_attr().
 Draft: whether post_string() already strips tags is not confirmed.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0008"
@@ -267,6 +269,8 @@ Only when the 'use in all calculators' option is on. Fix 4.0.12 removes the secr
 Draft: PayPal client_secret exposure is at lines 69-75 of the same file (not labelled as a separate location).
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0009"
@@ -297,6 +301,8 @@ Fix 2.8.57 restricts the type to a list of known elements and uses extract(..., 
 Draft: the include happens in the caller, after wpinv_locate_template(); the label points at the construction of the path.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0010"
@@ -327,6 +333,8 @@ Fix 1.2.71 touches three places: process_account() discards file-field values th
 Draft: the sink is the delete at 2429-2441; the planting step is in process_account() (around line 2131).
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0011"
@@ -357,6 +365,8 @@ Fix 3.4.3 applies absint() to wpf_fid. The same release also passes the currentu
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0012"
@@ -388,6 +398,8 @@ The same release also fixes an SQL injection in render-link-library-alpha-filter
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0013"
@@ -419,6 +431,8 @@ Advisory says PHP magic methods fire during unserialize pre-parse, so the allowe
 Draft: the signing step (wp_hash at lines 167, 237, 279) is part of the flaw and is not labelled separately.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0014"
@@ -451,6 +465,8 @@ The release also changes unrelated code (Freemius loading, archive-image-field.p
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0015"
@@ -483,6 +499,8 @@ The release also validates the heading level (abstract-block.php get_html_tag, e
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0016"
@@ -514,6 +532,8 @@ Second sink: searchContent() at line 43 with the same pattern.
 Draft: class could also be read as missing-authz; the advisory calls it information exposure.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0017"
@@ -544,6 +564,8 @@ Same pattern in OrderCrossSells.php, OrderQuantityProducts.php and OrderRelatedP
 Draft: the include itself happens in the renderer (not read yet).
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0018"
@@ -576,6 +598,8 @@ auth is 'admin' because the schema has no shop-manager level; the advisory requi
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0019"
@@ -606,6 +630,8 @@ Fix 6.3.0 removes `false &&` and adds nonces to the localized data.
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0020"
@@ -636,6 +662,8 @@ The same pattern is in redirect_login_page() (84-92), login_failed() (96-101) an
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0021"
@@ -666,6 +694,8 @@ Fix 2.20.2 removes both filters (gutenbee_file_and_ext_json and gutenbee_mime_ty
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0022"
@@ -696,6 +726,8 @@ Fix 3.9.1 applies sanitize_file_name() and only serves files that start with 'yo
 Draft: the route's permit() callback (line 93) was not read; the advisory says unauthenticated.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0023"
@@ -726,6 +758,8 @@ Fix 5.0.1 uses wp_safe_remote_request() (line 150). Exploitation needs a placeho
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0024"
@@ -756,6 +790,8 @@ Fix 5.17.8 applies absint() to banner and a digit-list regex to group. group has
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0025"
@@ -786,6 +822,8 @@ Fix 1.4.8 uses vxcf_form::maybe_unserialize (a safe variant) and flattens array 
 Draft: the unauthenticated reachability was not verified.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0026"
@@ -816,6 +854,8 @@ Fix 2.0.10 loads the file with DOMDocument and LIBXML_NONET. Only PHP < 8.0 is a
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0027"
@@ -846,6 +886,8 @@ Fix 8.3.18 rejects '..' in the relative path.
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0028"
@@ -876,6 +918,8 @@ Fix 1.8.41 reworks sort_by and sort_direction handling into a closed list.
 Draft: the exact bypass in the old allow-list was not traced.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0029"
@@ -906,6 +950,8 @@ Fix 4.5.5.1 adds gmw_parse_latlng_boundary() and drops invalid values before the
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0030"
@@ -936,6 +982,8 @@ Fix 4.3.3 checks current_user_can('edit_post', $post_id), applies wp_kses_post()
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0031"
@@ -966,6 +1014,8 @@ Fix 1.3.8 adds is_safe_external_url() (wp_http_validate_url, http/https only, pr
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0032"
@@ -996,6 +1046,8 @@ Fix 1.2.12 adds 'html' and 'htm' to the blocklist (a single line). The sink is t
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0033"
@@ -1026,6 +1078,8 @@ Fix 1.7.8.4 checks the extension against MDJM_BLOCKED_UPLOAD_EXTS and uses sanit
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0034"
@@ -1057,6 +1111,8 @@ The label points at the callback that returns the data; the missing check is in 
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0035"
@@ -1087,6 +1143,8 @@ Fix 9.1.13 builds an allow-list of known tables (plus report tables) and sanitiz
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0036"
@@ -1117,6 +1175,8 @@ The sink is in the bundled wp-orm library (path contains 'vendor'; harness copie
 Draft: if the dataset excludes bundled libraries from labels, this case should be dropped.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0037"
@@ -1147,6 +1207,8 @@ Fix 5.6.0 only allows wcfm_vendor when WCFM Marketplace is active and vendor aut
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0038"
@@ -1177,6 +1239,8 @@ Fix 1.4.02 adds a per-calendar ownership check in the export path (cpabc_apps_go
 Draft: whether the ownership fix also lands inside calendar_load2() was not traced.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0039"
@@ -1207,6 +1271,8 @@ Fix 14.3.4 returns early for logged-out users and applies strip_shortcodes() to 
 Draft: the do_shortcode call was not traced; it is described by the advisory.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
 
 [[case]]
 id = "wp-0040"
@@ -1237,3 +1303,5 @@ Fix 1.0.3 rewrites the main file (the diff is mostly a rewrite) and adds URL val
 Draft.
 """
 drafted_by = "claude"
+reviewed_by = "BardLaudian"
+reviewed_on = "2026-11-02"
