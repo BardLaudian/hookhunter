@@ -218,6 +218,7 @@ def run(
     case: Annotated[list[str] | None, typer.Option("--case", help="Run only this case id (repeatable).")] = None,
     conditions: Annotated[str, typer.Option(help="Comma separated: A, B, C-full, C-min, C-noscripts.")] = "A,B,C-full",
     repeats: Annotated[int, typer.Option(min=1, help="Repeats per run.")] = 1,
+    first_repeat: Annotated[int, typer.Option(min=1, help="Number of the first repeat; --first-repeat 2 --repeats 1 runs only repeat 2.")] = 1,
     versions: Annotated[str, typer.Option(help="vuln, fixed or vuln,fixed (fixed = negative control).")] = "vuln,fixed",
     model: Annotated[str, typer.Option(help="Model recorded with every run.")] = DEFAULT_MODEL,
     budget_usd: Annotated[float, typer.Option(help="Hard cap per run, passed to claude --max-budget-usd.")] = 3.0,
@@ -254,7 +255,7 @@ def run(
     if not vers or any(v not in ("vuln", "fixed") for v in vers):
         err.print("[red]--versions must be vuln, fixed or vuln,fixed[/red]")
         raise typer.Exit(2)
-    plan = build_plan(selected, names, repeats, vers)
+    plan = build_plan(selected, names, repeats, vers, first_repeat)
     spec = ContainerSpec()
     skill_dirs = default_skill_dirs()
     price = PRICES[model]

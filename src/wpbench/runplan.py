@@ -105,13 +105,13 @@ class Run:
         return f"{self.case_id}.{self.version}.{self.condition}.r{self.repeat}"
 
 
-def build_plan(cases: Iterable[Case], conditions: Iterable[str], repeats: int, versions: Iterable[str] = VERSIONS) -> list[Run]:
+def build_plan(cases: Iterable[Case], conditions: Iterable[str], repeats: int, versions: Iterable[str] = VERSIONS, first_repeat: int = 1) -> list[Run]:
     plan = [
         Run(c.id, v, cond, r)
         for c in cases
         for v in versions
         for cond in conditions
-        for r in range(1, repeats + 1)
+        for r in range(first_repeat, first_repeat + repeats)
     ]
     return plan
 

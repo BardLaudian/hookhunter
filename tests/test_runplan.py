@@ -109,3 +109,11 @@ def test_b_invoked_differs_from_b_only_by_the_prompt_line() -> None:
     assert (b.skill, b.parts, b.tools, b.allowed_tools()) == (bi.skill, bi.parts, bi.tools, bi.allowed_tools())
     assert b.prompt_prefix == "" and "wp-plugin-triage" in bi.prompt_prefix
     assert all(c.prompt_prefix == "" for n, c in CONDITIONS.items() if n != "B-invoked")
+
+
+def test_first_repeat_numbers_the_repeats() -> None:
+    class C:
+        id = "a"
+
+    plan = build_plan([C()], ["A"], 1, ("vuln",), first_repeat=2)  # type: ignore[list-item]
+    assert [r.run_id for r in plan] == ["a.vuln.A.r2"]
