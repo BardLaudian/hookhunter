@@ -388,3 +388,191 @@ The same release also fixes an SQL injection in render-link-library-alpha-filter
 Draft.
 """
 drafted_by = "claude"
+
+[[case]]
+id = "wp-0013"
+cve = "CVE-2026-78006"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-78006"
+retrieved = "2026-11-02"
+slug = "the-events-calendar"
+vuln_version = "6.17.4"
+fixed_version = "6.17.4.1"
+vuln_sha256 = "d8271f2df4f3abc45699471c99d55bbe0c8a6a7efd997da9a5b858032c1c1561"
+fixed_sha256 = "95045b911b92a11e5e45dc2064fe1e6609cfb538f61616ce9188dd527ba7b037"
+cwe = "CWE-502"
+class = "object-injection"
+auth = "unauthenticated"
+published = "2026-09-12"
+after_cutoff = true
+
+[case.truth]
+file = "src/Tribe/Views/V2/Widgets/Service_Provider.php"
+function = "is_safe_widget_instance"
+line_start = 296
+line_end = 305
+entry_point = "REST widget copy/paste handlers (enable_widget_copy_paste, enable_saving_widget_copied) and the render_block filter enable_rendering_widget_copied; reachable unauthenticated through block markup in comment HTML that the V2 single-event template passes to do_blocks()"
+data_flow = "widget instance 'encoded' (base64 of a serialized array) -> is_safe_widget_instance(): unserialize(..., allowed_classes=false) as the only check -> wp_hash() computed over the submitted bytes -> the signed instance is later unserialized again"
+notes = """
+Fix 6.17.4.1 replaces is_safe_widget_instance() by get_safe_widget_instance() and signs and stores the sanitized re-serialised instance instead of the submitted bytes (three handlers); the unserialize call at 302 is the labelled sink.
+Advisory says PHP magic methods fire during unserialize pre-parse, so the allowed_classes=false check is bypassed.
+Draft: the signing step (wp_hash at lines 167, 237, 279) is part of the flaw and is not labelled separately.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0014"
+cve = "CVE-2026-18488"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-18488"
+retrieved = "2026-11-02"
+slug = "blocksy-companion"
+vuln_version = "2.1.51"
+fixed_version = "2.1.52"
+vuln_sha256 = "2b0e8b812d6828fc43faf1d998a2491f45180f1450c01fc743f0c74ff4be7e20"
+fixed_sha256 = "ff954c4f9415fd1e92436d0820283a15fb59abcf7accc5816147fdf6700f81bf"
+cwe = "CWE-79"
+class = "stored-xss"
+auth = "contributor"
+published = "2026-09-01"
+after_cutoff = true
+
+[case.truth]
+file = "framework/features/blocks/dynamic-data/block.php"
+function = "render"
+line_start = 143
+line_end = 185
+entry_point = "blocksy/dynamic-data block saved by an author-level user, rendered on the front end"
+data_flow = "block attribute tagName (saved in post content) -> render() passes $attributes unchanged to the view -> blocksy_html_tag_e($tagName, ...) prints it as an element name (views/custom-text-field.php:131, views/woo-field.php:152 and others)"
+notes = """
+Fix 2.1.52 adds an allow-list (div, span, p, h1-h6) for tagName in render().
+The sinks are in several views; the label points at render(), where the fix is. An agent that reports a view file will not match.
+The release also changes unrelated code (Freemius loading, archive-image-field.php): not labelled.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0015"
+cve = "CVE-2026-104762"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-104762"
+retrieved = "2026-11-02"
+slug = "kadence-blocks"
+vuln_version = "3.7.12"
+fixed_version = "3.7.12.1"
+vuln_sha256 = "81b278bc46d976c94c188f5581477c4c62b1ed2c5716d60c0e266c525202004d"
+fixed_sha256 = "584df5b59f88f6283b25d3888ceba02e9f750ff7b40b6a01a09559b972ebb168"
+cwe = "CWE-79"
+class = "stored-xss"
+auth = "contributor"
+published = "2026-10-10"
+after_cutoff = true
+
+[case.truth]
+file = "includes/class-kadence-blocks-google-fonts.php"
+function = "print_gfonts"
+line_start = 120
+line_end = 155
+entry_point = "Google Fonts block attributes (fontfamily) saved by an author-level user; printed in the page head/footer; only when 'Load Google Fonts Locally' is enabled"
+data_flow = "block font family attribute -> $gfonts -> $link -> esc_attr() then htmlspecialchars_decode() on the way to get_webfont_url() -> echo '<link href=\"' . $full_link . '\">' with no output escaping"
+notes = """
+Fix 3.7.12.1 removes the esc_attr/htmlspecialchars_decode round trip and prints esc_url($full_link).
+The same print_gfonts() code exists in includes/class-kadence-blocks-frontend.php (347-380); both are changed. The label picks the google-fonts class; check which one is loaded.
+The release also validates the heading level (abstract-block.php get_html_tag, entry-loop-title.php, countup block): a different issue, not labelled.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0016"
+cve = "CVE-2026-12385"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-12385"
+retrieved = "2026-11-02"
+slug = "smart-slider-3"
+vuln_version = "3.5.1.37"
+fixed_version = "3.5.1.38"
+vuln_sha256 = "4fbc097f140d63a0ee2c249b1cc1570af36cb948de6f47be3612d564cd66b9ab"
+fixed_sha256 = "5fe318253434bd1647f6ff11bbe51af7985ff003088889e7a0e418db1fb2537e"
+cwe = "CWE-200"
+class = "info-disclosure"
+auth = "contributor"
+published = "2026-07-13"
+after_cutoff = true
+
+[case.truth]
+file = "Nextend/Framework/Content/WordPress/WordPressContent.php"
+function = "searchLink"
+line_start = 18
+line_end = 41
+entry_point = "admin-ajax action smart-slider3, controller content, actions searchLink and searchContent (nonce is available to contributors)"
+data_flow = "request keyword -> Request::getVar -> concatenated into the WP_Query query string 'post_type=any&posts_per_page=20&post_status=publish&s=' . $keyword -> the keyword can append query args (for example post_status) -> titles and excerpts of private, draft and trashed posts returned"
+notes = """
+Fix 3.5.1.38 builds the query as an array with sanitize_text_field($keyword) and adds validatePermission('smartslider_edit') to both actions in ControllerAjaxContent.php.
+Second sink: searchContent() at line 43 with the same pattern.
+Draft: class could also be read as missing-authz; the advisory calls it information exposure.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0017"
+cve = "CVE-2026-103367"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-103367"
+retrieved = "2026-11-02"
+slug = "shopmagic-for-woocommerce"
+vuln_version = "4.9.0"
+fixed_version = "4.9.1"
+vuln_sha256 = "b27e4ca12afd06361be0e9cb9df0bedde2a99b72ad3576f258c51191c600e947"
+fixed_sha256 = "a3c966d30f02f6113fcfab38c78f538d630394f625607709bb12116a915e4519"
+cwe = "CWE-98"
+class = "file-inclusion"
+auth = "unauthenticated"
+published = "2026-10-14"
+after_cutoff = true
+
+[case.truth]
+file = "src/Workflow/Placeholder/Builtin/Order/OrderProductsOrdered.php"
+function = "value"
+line_start = 39
+line_end = 65
+entry_point = "a published recipe that processes a ShopMagic order placeholder with a template parameter; parameters come from the placeholder text (advisory names customer first name in a built-in recipe)"
+data_flow = "placeholder parameter 'template' -> get_template_path() -> 'placeholder/products_ordered/' . $template -> TemplateRendererForPlaceholders::render() -> template file included"
+notes = """
+Same pattern in OrderCrossSells.php, OrderQuantityProducts.php and OrderRelatedProducts.php (four sinks); fix 4.9.1 validates the template with is_template_valid() in all four. Only OrderProductsOrdered is labelled.
+Draft: the include itself happens in the renderer (not read yet).
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0018"
+cve = "CVE-2026-17581"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-17581"
+retrieved = "2026-11-02"
+slug = "woocommerce-pos"
+vuln_version = "1.9.14"
+fixed_version = "1.9.15"
+vuln_sha256 = "d0a996093c5bb7570670904467f1cf204fd6d9e94b24e9f007fd567f64daea91"
+fixed_sha256 = "4abfbf8685ac1a46a7f60985bde480f7446976368b88dbe6e60ae0160f1dbc27"
+cwe = "CWE-94"
+class = "rce"
+auth = "admin"
+published = "2026-08-16"
+after_cutoff = true
+
+[case.truth]
+file = "includes/Services/Receipt_Renderer_Factory.php"
+function = "create"
+line_start = 24
+line_end = 33
+entry_point = "receipt template post with engine 'thermal' written by a user with Shop Manager rights, rendered through Template_Pdf_Service::render_html_engine()"
+data_flow = "template content (stored raw, kses-exempt) -> Receipt_Renderer_Factory::create('thermal') falls to the default branch -> Legacy_Php_Renderer::render() writes the content to a temp file and include()s it"
+notes = """
+Fix 1.9.15 adds a 'thermal' case returning a new Thermal_Html_Renderer that never executes PHP.
+The include is in includes/Templates/Renderers/Legacy_Php_Renderer.php (lines 28 and 42).
+auth is 'admin' because the schema has no shop-manager level; the advisory requires Shop Manager.
+Draft.
+"""
+drafted_by = "claude"
