@@ -164,7 +164,7 @@ def run_one(
 ) -> dict[str, Any]:
     cond = CONDITIONS[run.condition]
     base = stage(run, cond, ctx.skill_dirs, ctx.exp_dir)
-    cmd = docker_command(run, cond, ctx.spec, ctx.cases_dir, ctx.exp_dir, ctx.model, ctx.budget_usd, ctx.prompt)
+    cmd = docker_command(run, cond, ctx.spec, ctx.cases_dir, ctx.exp_dir, ctx.model, ctx.budget_usd, cond.prompt_prefix + ctx.prompt)
     started = now()
     t0 = time.monotonic()
     timed_out = False
@@ -185,7 +185,7 @@ def run_one(
         run_id=run.run_id, case_id=run.case_id, version=run.version, condition=run.condition, repeat=run.repeat,
         model=ctx.model, started=started, finished=now(), wall_s=round(time.monotonic() - t0, 1), exit_code=code,
         skill_hash=tree_hash(base / "work" / ".claude" / "skills" / cond.skill) if cond.skill else None,
-        prompt_sha256=ctx.prompt_sha, schema_sha256=ctx.schema_sha, claude_version=ctx.claude_version, budget_usd=ctx.budget_usd,
+        prompt_sha256=ctx.prompt_sha, prompt_prefix=cond.prompt_prefix, schema_sha256=ctx.schema_sha, claude_version=ctx.claude_version, budget_usd=ctx.budget_usd,
     )
     (base / "record.json").write_text(json.dumps(rec, indent=1), encoding="utf-8")
     return rec

@@ -59,7 +59,9 @@ No exploit payloads, no PoC field. Validate with a JSON Schema; invalid output =
 
 ## 5. Scoring
 - **Match** between a finding and the ground truth: same file **and** (line ranges overlap within a
-  tolerance of ±10 lines **or** same function name) **and** compatible vulnerability family
+  tolerance of ±10 lines **or** (same function name **and** the finding lies within 100 lines of the
+  ground-truth range, so that a huge dispatcher function does not match every finding inside it; changed
+  2026-11-02 after a measured artifact, see DECISIONS.md section 16)) **and** compatible vulnerability family
   (CWE family map in `src/wpbench/cwe_families.py`, e.g. CWE-79/80/83 → XSS; CWE-862/863/285 →
   authorization). Matching code is unit-tested with hand-made cases.
 - **Recall** = cases where at least one finding matches / cases.

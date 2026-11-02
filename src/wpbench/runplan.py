@@ -28,6 +28,7 @@ class Condition:
     bash_scripts: bool  # scoped Bash for the skill's own scripts (docs/DECISIONS.md section 15)
     extra_context_tokens: int  # tokens the skill adds to the context in the mid scenario (assumption)
     description: str
+    prompt_prefix: str = ""  # the only allowed difference in the task prompt, used by the *-invoked variants
 
     @property
     def tools(self) -> tuple[str, ...]:
@@ -48,6 +49,7 @@ CONDITIONS: dict[str, Condition] = {
     for c in (
         Condition("A", None, "none", False, 0, "no skill"),
         Condition("B", "wp-plugin-triage", "full", False, 2_500, "wp-plugin-triage v1"),
+        Condition("B-invoked", "wp-plugin-triage", "full", False, 2_500, "wp-plugin-triage v1, the task prompt asks to use it", "Use the wp-plugin-triage skill for this audit.\n\n"),
         Condition("C-full", "hookhunter", "full", True, 28_000, "hookhunter, whole skill (scripts through scoped Bash)"),
         Condition("C-min", "hookhunter", "skill-md", False, 3_000, "hookhunter: SKILL.md only"),
         Condition("C-noscripts", "hookhunter", "skill-md+reference", False, 18_000, "hookhunter: SKILL.md + reference, no scripts"),

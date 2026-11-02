@@ -20,9 +20,10 @@ def test_overlap_and_tolerance_boundaries() -> None:
     assert match(f(line_start=130, line_end=125), T).matched  # reversed range is tolerated
 
 
-def test_same_function_matches_far_away_lines() -> None:
-    assert match(f(line_start=900, line_end=910, function="save_settings"), T).matched
-    assert match(f(line_start=900, line_end=910, function="Admin::Save_Settings()"), T).matched
+def test_same_function_matches_nearby_lines_only() -> None:
+    assert match(f(line_start=200, line_end=210, function="save_settings"), T).matched
+    assert match(f(line_start=200, line_end=210, function="Admin::Save_Settings()"), T).matched
+    assert not match(f(line_start=900, line_end=910, function="save_settings"), T).matched  # beyond the 100-line cap
     assert not match(f(line_start=900, line_end=910, function=""), T).matched  # an empty name is not "the same function"
 
 
@@ -69,7 +70,8 @@ def test_no_findings_is_a_miss_not_an_error() -> None:
 
 def test_function_cap_stops_a_giant_function_matching_everything() -> None:
     far = f(line_start=900, line_end=910, function="save_settings")
-    assert match(far, T).matched  # SPEC literal
+    assert not match(far, T).matched  # the default is the SPEC cap
+    assert match(far, T, function_cap=None).matched  # the old rule, for sensitivity analysis
     assert not match(far, T, function_cap=100).matched
     assert match(f(line_start=200, line_end=210, function="save_settings"), T, function_cap=100).matched  # 66 lines away
     assert match(f(line_start=125, line_end=130, function="other"), T, function_cap=0).matched  # overlap is never capped

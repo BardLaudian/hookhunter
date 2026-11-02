@@ -20,6 +20,7 @@ from wpbench.cases import DEFAULT_DATASET, Case, Issue, load_cases, summarise
 from wpbench.diff import CHANGED_LINES_LIMIT, changed_lines, diff_trees
 from wpbench.execute import Context, execute
 from wpbench.fetch import FetchError, fetch_case, http_download
+from wpbench.match import FUNCTION_CAP
 from wpbench.probe import build_prompt, judge
 from wpbench.runplan import (
     BASE_CONTEXT_TOKENS,
@@ -406,14 +407,15 @@ def score(
     out: Annotated[Path | None, typer.Option(help="Output directory; default results/<first run name>.")] = None,
     seed: Annotated[int, typer.Option(help="Seed for the bootstrap and the sheet sample.")] = 20261101,
     boot: Annotated[int, typer.Option(min=100, help="Bootstrap resamples.")] = 10_000,
-    function_cap: Annotated[int | None, typer.Option(help="Sensitivity: the same-function clause only counts within this many lines (default: SPEC literal, no cap).")] = None,
+    function_cap: Annotated[int, typer.Option(help="The same-function clause only counts within this many lines of the truth (SPEC section 5).")] = FUNCTION_CAP,
+    no_function_cap: Annotated[bool, typer.Option("--no-function-cap", help="Sensitivity analysis: same function matches at any distance (the old rule).")] = False,
     dataset: DatasetOpt = DEFAULT_DATASET,
 ) -> None:
     """Score runs against the signed ground truth (local, no API calls): recall, recall@3, false alarms, cost, paired bootstrap CIs."""
     cases = _load(dataset)
     wanted = [c.strip() for c in conditions.split(",") if c.strip()]
     loaded = load_records(run, wanted or None)
-    rows, unsigned = score_records(loaded.records, cases, function_cap)
+    rows, unsigned = score_records(loaded.records, cases, None if no_function_cap else function_cap)
     if not rows:
         err.print("[yellow]nothing to score[/yellow]")
         raise typer.Exit(1)

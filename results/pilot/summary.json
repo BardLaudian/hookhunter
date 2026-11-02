@@ -2,66 +2,87 @@
  "conditions": [
   {
    "condition": "A",
-   "vuln_runs": 4,
-   "fixed_runs": 3,
-   "cases": 4,
-   "recall": 0.75,
+   "vuln_runs": 6,
+   "fixed_runs": 6,
+   "cases": 6,
+   "recall": 0.6666666666666666,
    "recall_ci": [
-    0.25,
+    0.3333333333333333,
     1.0
    ],
    "recall_at_3": 0.5,
    "false_alarm_rate": 0.0,
-   "false_alarm_cases": 3,
-   "findings_per_vuln_run": 5.25,
-   "unmatched_per_vuln_run": 4.25,
-   "cost_usd": 1.8396318300000003,
-   "cost_per_hit": 0.6132106100000001,
-   "mean_cost_per_run": 0.26280454714285717,
+   "false_alarm_cases": 6,
+   "findings_per_vuln_run": 5.0,
+   "unmatched_per_vuln_run": 4.333333333333333,
+   "cost_usd": 2.7338255300000003,
+   "cost_per_hit": 0.6834563825000001,
+   "mean_cost_per_run": 0.2278187941666667,
    "skill_invoked_rate": 0.0,
-   "mean_turns": 71.42857142857143
+   "mean_turns": 68.16666666666667
   },
   {
    "condition": "B",
-   "vuln_runs": 4,
-   "fixed_runs": 4,
-   "cases": 4,
-   "recall": 0.75,
+   "vuln_runs": 6,
+   "fixed_runs": 6,
+   "cases": 6,
+   "recall": 0.6666666666666666,
    "recall_ci": [
-    0.25,
+    0.3333333333333333,
     1.0
    ],
-   "recall_at_3": 0.25,
-   "false_alarm_rate": 0.25,
-   "false_alarm_cases": 4,
-   "findings_per_vuln_run": 5.0,
-   "unmatched_per_vuln_run": 3.5,
-   "cost_usd": 1.06407265,
-   "cost_per_hit": 0.3546908833333333,
-   "mean_cost_per_run": 0.13300908125,
-   "skill_invoked_rate": 0.25,
-   "mean_turns": 51.625
+   "recall_at_3": 0.3333333333333333,
+   "false_alarm_rate": 0.16666666666666666,
+   "false_alarm_cases": 6,
+   "findings_per_vuln_run": 4.5,
+   "unmatched_per_vuln_run": 3.8333333333333335,
+   "cost_usd": 1.41817829,
+   "cost_per_hit": 0.3545445725,
+   "mean_cost_per_run": 0.11818152416666666,
+   "skill_invoked_rate": 0.3333333333333333,
+   "mean_turns": 50.0
+  },
+  {
+   "condition": "B-invoked",
+   "vuln_runs": 6,
+   "fixed_runs": 6,
+   "cases": 6,
+   "recall": 0.3333333333333333,
+   "recall_ci": [
+    0.0,
+    0.6666666666666666
+   ],
+   "recall_at_3": 0.3333333333333333,
+   "false_alarm_rate": 0.0,
+   "false_alarm_cases": 6,
+   "findings_per_vuln_run": 2.5,
+   "unmatched_per_vuln_run": 2.1666666666666665,
+   "cost_usd": 0.41918154499999993,
+   "cost_per_hit": 0.20959077249999997,
+   "mean_cost_per_run": 0.03493179541666666,
+   "skill_invoked_rate": 1.0,
+   "mean_turns": 30.083333333333332
   },
   {
    "condition": "C-full",
-   "vuln_runs": 4,
-   "fixed_runs": 4,
-   "cases": 4,
-   "recall": 0.75,
+   "vuln_runs": 6,
+   "fixed_runs": 6,
+   "cases": 6,
+   "recall": 0.6666666666666666,
    "recall_ci": [
-    0.25,
+    0.3333333333333333,
     1.0
    ],
    "recall_at_3": 0.5,
-   "false_alarm_rate": 0.25,
-   "false_alarm_cases": 4,
-   "findings_per_vuln_run": 3.25,
-   "unmatched_per_vuln_run": 2.5,
-   "cost_usd": 0.894566785,
-   "cost_per_hit": 0.2981889283333333,
-   "mean_cost_per_run": 0.111820848125,
+   "false_alarm_rate": 0.0,
+   "false_alarm_cases": 6,
+   "findings_per_vuln_run": 3.0,
+   "unmatched_per_vuln_run": 2.3333333333333335,
+   "cost_usd": 0.99644092,
+   "cost_per_hit": 0.24911023,
+   "mean_cost_per_run": 0.08303674333333333,
    "skill_invoked_rate": 1.0,
-   "mean_turns": 51.875
+   "mean_turns": 45.083333333333336
   }
  ],
  "differences": [
@@ -73,7 +94,17 @@
     0.0,
     0.0
    ],
-   "paired_cases": 4
+   "paired_cases": 6
+  },
+  {
+   "condition": "B-invoked",
+   "versus": "A",
+   "recall_diff": -0.3333333333333333,
+   "ci": [
+    -0.6666666666666666,
+    0.0
+   ],
+   "paired_cases": 6
   },
   {
    "condition": "C-full",
@@ -83,7 +114,7 @@
     0.0,
     0.0
    ],
-   "paired_cases": 4
+   "paired_cases": 6
   }
  ],
  "unsigned_cases_skipped": [],
@@ -240,25 +271,33 @@
    "fp": 0,
    "plausible": 0,
    "real-but-other": 0,
-   "unlabelled": 17,
-   "not_in_sample": 0
+   "unlabelled": 16,
+   "not_in_sample": 10
+  },
+  "B-invoked": {
+   "matched": 2,
+   "fp": 0,
+   "plausible": 0,
+   "real-but-other": 0,
+   "unlabelled": 9,
+   "not_in_sample": 4
   },
   "B": {
-   "matched": 6,
+   "matched": 4,
    "fp": 0,
    "plausible": 0,
    "real-but-other": 0,
-   "unlabelled": 14,
-   "not_in_sample": 0
+   "unlabelled": 16,
+   "not_in_sample": 7
   },
   "C-full": {
-   "matched": 3,
+   "matched": 4,
    "fp": 0,
    "plausible": 0,
    "real-but-other": 0,
-   "unlabelled": 10,
-   "not_in_sample": 0
+   "unlabelled": 9,
+   "not_in_sample": 5
   }
  },
- "sheet_sampled": false
+ "sheet_sampled": true
 }

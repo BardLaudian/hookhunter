@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from wpbench.cases import Case
-from wpbench.match import score_findings, truth_from_case
+from wpbench.match import FUNCTION_CAP, score_findings, truth_from_case
 from wpbench.stats import bootstrap_diff, bootstrap_mean, mean
 
 INFRA = {"error", "timeout", "budget"}
@@ -60,7 +60,7 @@ def load_records(run_dirs: Sequence[Path], conditions: Sequence[str] | None = No
     return out
 
 
-def score_records(records: Sequence[dict[str, Any]], cases: Sequence[Case], function_cap: int | None = None) -> tuple[list[dict[str, Any]], list[str]]:
+def score_records(records: Sequence[dict[str, Any]], cases: Sequence[Case], function_cap: int | None = FUNCTION_CAP) -> tuple[list[dict[str, Any]], list[str]]:
     """One row per run with its hit flags. Returns (rows, ids of cases skipped for lack of a signed label)."""
     by_id = {c.id: c for c in cases}
     rows: list[dict[str, Any]] = []

@@ -102,3 +102,10 @@ def test_run_refuses_to_execute_and_dry_run_starts_nothing(tmp_path: Path) -> No
     assert runner.invoke(app, ["run"]).exit_code == 2
     res = runner.invoke(app, ["run", "--dry-run", "--cases-dir", str(tmp_path / "none")])
     assert res.exit_code == 0 and "Plan" in res.output and "not executed" in res.output
+
+
+def test_b_invoked_differs_from_b_only_by_the_prompt_line() -> None:
+    b, bi = CONDITIONS["B"], CONDITIONS["B-invoked"]
+    assert (b.skill, b.parts, b.tools, b.allowed_tools()) == (bi.skill, bi.parts, bi.tools, bi.allowed_tools())
+    assert b.prompt_prefix == "" and "wp-plugin-triage" in bi.prompt_prefix
+    assert all(c.prompt_prefix == "" for n, c in CONDITIONS.items() if n != "B-invoked")

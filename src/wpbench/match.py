@@ -10,6 +10,7 @@ from typing import Any
 from wpbench.cwe_families import compatible
 
 TOLERANCE = 10
+FUNCTION_CAP = 100  # docs/SPEC.md section 5: the same-function clause only counts within this many lines of the truth
 CONF_RANK = {"high": 0, "medium": 1, "low": 2}
 
 
@@ -51,11 +52,11 @@ def truth_from_case(case: Any) -> Truth:
     return Truth(t["file"], t["function"], int(t["line_start"]), int(t["line_end"]), case.cwe, case.cls)
 
 
-def match(finding: dict[str, Any], truth: Truth, tolerance: int = TOLERANCE, function_cap: int | None = None) -> MatchResult:
+def match(finding: dict[str, Any], truth: Truth, tolerance: int = TOLERANCE, function_cap: int | None = FUNCTION_CAP) -> MatchResult:
     """Same file AND (line ranges overlap within the tolerance OR same function name) AND compatible family.
 
-    ``function_cap`` (off by default, SPEC literal) limits the function clause to findings within that many lines of the truth, so a
-    giant dispatcher function does not match every finding inside it (docs/DECISIONS.md section 16).
+    ``function_cap`` limits the function clause to findings within that many lines of the truth, so a giant dispatcher function does
+    not match every finding inside it (docs/SPEC.md section 5, docs/DECISIONS.md section 16); None disables it (sensitivity analysis).
     """
     same_file = norm_path(finding.get("file", "")) == norm_path(truth.file)
     lo, hi = sorted((int(finding.get("line_start", 0)), int(finding.get("line_end", 0))))
@@ -80,7 +81,7 @@ class RunScore:
     unmatched: tuple[int, ...]
 
 
-def score_findings(findings: Sequence[dict[str, Any]], truth: Truth, function_cap: int | None = None) -> RunScore:
+def score_findings(findings: Sequence[dict[str, Any]], truth: Truth, function_cap: int | None = FUNCTION_CAP) -> RunScore:
     flags = [match(f, truth, function_cap=function_cap).matched for f in findings]
     top3 = ranked(findings)[:3]
     ids = {id(f) for f in top3}
