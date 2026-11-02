@@ -100,3 +100,85 @@ reason = "fix mixed with large unrelated changes"
 cve = "CVE-2026-15406"
 slug = "wp-event-solution"
 reason = "fix mixed with large unrelated changes"
+
+# Added 2026-11-02, phase 5 batches 3 and 4 (older CVEs).
+
+[[dropped]]
+cve = "CVE-2026-5957"
+slug = "emailkit"
+reason = "the fix widens the allowed template paths; the vulnerable check cannot be pinned to one change"
+
+[[dropped]]
+cve = "CVE-2026-0910"
+slug = "wpforo"
+reason = "the diff is mostly template reformatting; the unserialize change is in an admin debug page"
+
+[[dropped]]
+cve = "CVE-2026-3844"
+slug = "breeze"
+reason = "advisory (file upload) and diff (gravatar regular expression) disagree"
+
+[[dropped]]
+cve = "CVE-2026-9843"
+slug = "contact-form-entries"
+reason = "second CVE of a plugin already in the dataset (wp-0025); one case per plugin"
+
+[[dropped]]
+cve = "CVE-2025-13139"
+slug = "surveyjs"
+reason = "the CSRF fix cannot be told apart from the SQL injection and ABSPATH changes in the same release"
+
+[[dropped]]
+cve = "CVE-2026-1277"
+slug = "url-shortify"
+reason = "the diff adds a new favorites feature and nonces; the open redirect is not visible"
+
+[[dropped]]
+cve = "CVE-2026-3132"
+slug = "master-addons"
+reason = "advisory (RCE) and diff (escaping in many widgets) disagree"
+
+[[dropped]]
+cve = "CVE-2026-3058"
+slug = "seraphinite-accelerator"
+reason = "the diff is a version bump plus changes that cannot be tied to the CVE"
+
+[[dropped]]
+cve = "CVE-2026-1357"
+slug = "wpvivid-backuprestore"
+reason = "advisory (file upload) and diff (remote storage form) disagree"
+
+[[dropped]]
+cve = "CVE-2026-2426"
+slug = "wp-downloadmanager"
+reason = "two CVEs fixed together with unrelated hardening; the labelled sink would be arbitrary"
+
+[[dropped]]
+cve = "CVE-2026-4062"
+slug = "geo-mashup"
+reason = "the fix sanitises many query arguments at once (two CVEs); no single sink"
+
+[[dropped]]
+cve = "CVE-2025-14070"
+slug = "review-for-discount"
+reason = "the fix changes post type visibility, nonce and capabilities together"
+
+[[dropped]]
+cve = "CVE-2026-4683"
+slug = "smartcat-wpml"
+reason = "the diff only adds ABSPATH guards"
+
+[[dropped]]
+cve = "CVE-2025-14507"
+slug = "eventprime-event-calendar-management"
+reason = "the diff is a feature list change; no security fix visible"
+
+[[dropped]]
+cve = "CVE-2026-7533"
+slug = "easy-digital-downloads"
+reason = "the CSRF fix cannot be located in a 282-line mixed diff"
+
+[[dropped]]
+cve = "CVE-2026-3459"
+slug = "drag-and-drop-multiple-file-upload-contact-form-7"
+reason = "the diff is mostly text-domain changes"
