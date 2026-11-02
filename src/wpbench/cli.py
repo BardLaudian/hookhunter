@@ -22,6 +22,7 @@ from wpbench.execute import Context, execute
 from wpbench.fetch import FetchError, fetch_case, http_download
 from wpbench.match import FUNCTION_CAP
 from wpbench.probe import build_prompt, judge
+from wpbench.review import ReviewError, check_truth, drop_version_noise, excerpt, sign_text
 from wpbench.runplan import (
     BASE_CONTEXT_TOKENS,
     CONDITIONS,
@@ -140,6 +141,118 @@ def fetch(
             err.print(f"[red]{exc}[/red]", highlight=False)
     console.print(table)
     raise typer.Exit(1 if failed else 0)
+
+
+@app.command()
+def review(
+    case_id: Annotated[str | None, typer.Argument(help="Case id to review; without it, list every case and its signature status.")] = None,
+    pending: Annotated[bool, typer.Option("--pending", help="In the list, show only cases whose label is not signed.")] = False,
+    checks: Annotated[bool, typer.Option("--checks", help="In the list, run the automatic label checks on every fetched case.")] = False,
+    diff_lines: Annotated[int, typer.Option(help="Maximum diff lines to print (0 = none).")] = 80,
+    code_lines: Annotated[int, typer.Option(help="Maximum lines of the labelled code to print.")] = 40,
+    sign: Annotated[bool, typer.Option("--sign", help="Sign the label after showing it. Only a person should do this.")] = False,
+    by: Annotated[str | None, typer.Option("--by", help="Reviewer name written to reviewed_by (required with --sign).")] = None,
+    on: Annotated[str | None, typer.Option("--on", help="Review date YYYY-MM-DD (default: today).")] = None,
+    yes: Annotated[bool, typer.Option("--yes", help="Do not ask for confirmation before signing.")] = False,
+    force: Annotated[bool, typer.Option("--force", help="Sign even if the automatic checks found errors, or re-sign a signed label.")] = False,
+    dataset: DatasetOpt = DEFAULT_DATASET,
+    cases_dir: CasesDirOpt = Path("cases"),
+) -> None:
+    """Review a drafted label: advisory, labelled code, fix diff and automatic checks; optionally sign it."""
+    from datetime import date
+
+    cases = {c.id: c for c in _load(dataset)}
+    if case_id is None:
+        table = Table(title="Label review status")
+        for col in ("id", "slug", "class", "auth", "signed by", "on"):
+            table.add_column(col)
+        for c in cases.values():
+            if pending and c.signed:
+                continue
+            row = c.truth or {}
+            table.add_row(c.id, c.slug, c.cls, c.auth, str(row.get("reviewed_by") or "-"), str(row.get("reviewed_on") or "-"))
+        console.print(table)
+        console.print(f"{sum(c.signed for c in cases.values())} of {len(cases)} labels signed")
+        if checks:
+            problems = 0
+            for c in cases.values():
+                vuln, fixed = cases_dir / c.id / "vuln", cases_dir / c.id / "fixed"
+                if not (vuln.is_dir() and fixed.is_dir()):
+                    console.print(f"{c.id}: not fetched", highlight=False)
+                    continue
+                for f in check_truth(c, vuln, diff_trees(vuln, fixed)):
+                    if f.level != "ok":
+                        problems += 1
+                        console.print(f"{c.id} {f.level} {f.name}: {f.detail}", highlight=False, markup=False)
+            console.print(f"{problems} finding(s) from the automatic checks (errors and warnings)")
+        return
+    if case_id not in cases:
+        err.print(f"[red]unknown case id {case_id}[/red]")
+        raise typer.Exit(2)
+    c = cases[case_id]
+    t = c.truth
+    old, new = cases_dir / c.id / "vuln", cases_dir / c.id / "fixed"
+    if not (old.is_dir() and new.is_dir()):
+        err.print(f"[red]{c.id} is not fetched; run `wpbench fetch --case {c.id}`[/red]")
+        raise typer.Exit(1)
+    diffs = diff_trees(old, new)
+    console.print(f"# {c.id} {c.cve} {c.slug} {c.vuln_version} -> {c.fixed_version}  class={c.cls} auth={c.auth} cutoff={'after' if c.after_cutoff else 'before'}", highlight=False)
+    advisory = dataset.parent / "advisories" / f"{c.id}.md"
+    console.print("## Advisory", highlight=False)
+    console.print(advisory.read_text() if advisory.is_file() else "(no advisory saved)", highlight=False, markup=False)
+    if not t:
+        err.print(f"[red]{c.id} has no label to review[/red]")
+        raise typer.Exit(1)
+    console.print("## Label", highlight=False)
+    for key in ("file", "function", "line_start", "line_end", "entry_point", "data_flow", "notes", "drafted_by", "reviewed_by", "reviewed_on"):
+        if key in t:
+            console.print(f"{key}: {t[key]}", highlight=False, markup=False)
+    console.print("## Labelled code (vulnerable release)", highlight=False)
+    target = old / str(t["file"])
+    if target.is_file():
+        console.print(excerpt(target, int(t["line_start"]), int(t["line_end"]), max_lines=code_lines), highlight=False, markup=False)
+    else:
+        console.print(f"(missing file {t['file']})", highlight=False, markup=False)
+    findings = check_truth(c, old, diffs)
+    console.print("## Automatic checks", highlight=False)
+    for f in findings:
+        colour = {"ok": "green", "warn": "yellow", "error": "red"}[f.level]
+        console.print(f"[{colour}]{f.level:5s}[/{colour}] {f.name}: ", end="", highlight=False)
+        console.print(f.detail, highlight=False, markup=False)
+    if diff_lines > 0:
+        console.print(f"## Fix diff ({len(diffs)} file(s), {sum(d.added + d.removed for d in diffs)} changed line(s); version-only lines hidden)", highlight=False)
+        shown = 0
+        for d in diffs:
+            body = drop_version_noise(f"### {d.path} [{d.status}] +{d.added} -{d.removed}\n{d.text}").splitlines()
+            for line in body:
+                if shown >= diff_lines:
+                    break
+                console.print(line, highlight=False, markup=False)
+                shown += 1
+        if shown >= diff_lines:
+            console.print(f"... diff cut at {diff_lines} lines; use `wpbench diff {c.id}` for all of it", highlight=False, markup=False)
+    if not sign:
+        return
+    if not by:
+        err.print("[red]--sign needs --by NAME[/red]")
+        raise typer.Exit(2)
+    if any(f.level == "error" for f in findings) and not force:
+        err.print("[red]the automatic checks found errors; fix the label or pass --force[/red]")
+        raise typer.Exit(1)
+    if c.signed and not force:
+        err.print(f"[red]{c.id} is already signed by {t.get('reviewed_by')}; pass --force to sign again[/red]")
+        raise typer.Exit(1)
+    when = on or date.today().isoformat()
+    if not yes and not typer.confirm(f"Sign {c.id} as {by} on {when}? This says you read the diff and the vulnerable code and agree with every field"):
+        err.print("not signed")
+        raise typer.Exit(1)
+    try:
+        text = sign_text(dataset.read_text(), c.id, by, when)
+    except ReviewError as exc:
+        err.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+    dataset.write_text(text)
+    console.print(f"[green]signed {c.id} as {by} on {when}[/green]")
 
 
 @app.command()
