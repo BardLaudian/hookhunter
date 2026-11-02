@@ -576,3 +576,393 @@ auth is 'admin' because the schema has no shop-manager level; the advisory requi
 Draft.
 """
 drafted_by = "claude"
+
+[[case]]
+id = "wp-0019"
+cve = "CVE-2026-2023"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-2023"
+retrieved = "2026-11-02"
+slug = "wp-plugin-info-card"
+vuln_version = "6.2.0"
+fixed_version = "6.3.0"
+vuln_sha256 = "07d5e53e03319b7e6537e1ec26ba7e2bf37fdfbb967e07b480ffea2a5f7462d8"
+fixed_sha256 = "6e44bc4fe75d8e0b334bed7a363e8378fa13c261ca28fbdc7fbf3d53f07d9208"
+cwe = "CWE-352"
+class = "csrf"
+auth = "unauthenticated"
+published = "2026-02-18"
+after_cutoff = false
+
+[case.truth]
+file = "php/Admin/Init.php"
+function = "ajax_save_custom_plugin"
+line_start = 381
+line_end = 395
+entry_point = "wp_ajax handler that saves custom plugin entries (administrator action), reachable by a forged request"
+data_flow = "forged request -> ajax_save_custom_plugin() -> nonce check disabled by `false &&` -> custom plugin post created or modified"
+notes = """
+Fix 6.3.0 removes `false &&` and adds nonces to the localized data.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0020"
+cve = "CVE-2026-1296"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-1296"
+retrieved = "2026-11-02"
+slug = "frontend-post-submission-manager-lite"
+vuln_version = "1.2.7"
+fixed_version = "1.2.8"
+vuln_sha256 = "913ae8be0f57c1ae415b4f70f32c74e3206265c5c627d6e62cbcff7f12bb4876"
+fixed_sha256 = "f77eb0a83526fda95ed7963a4f6f44b71170da02f3fa85dfea0cb996b46ca872"
+cwe = "CWE-601"
+class = "open-redirect"
+auth = "unauthenticated"
+published = "2026-02-18"
+after_cutoff = false
+
+[case.truth]
+file = "includes/classes/class-fpsml-shortcode.php"
+function = "verify_username_password"
+line_start = 104
+line_end = 114
+entry_point = "login form shortcode; filter authenticate; POST requested_page"
+data_flow = "POST requested_page -> esc_url() only -> wp_redirect($login_page . '?login=empty')"
+notes = """
+The same pattern is in redirect_login_page() (84-92), login_failed() (96-101) and the captcha validation (redirect_to, 171-190); fix 1.2.8 switches all of them to wp_safe_redirect. Only verify_username_password() is labelled (the function the advisory names).
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0021"
+cve = "CVE-2026-9227"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-9227"
+retrieved = "2026-11-02"
+slug = "gutenbee"
+vuln_version = "2.20.1"
+fixed_version = "2.20.2"
+vuln_sha256 = "7bbd7cce7e4dd6acfe7f2812f8bfa08f375bd8c05a2e2470b3361f9a092dfa05"
+fixed_sha256 = "3cf8634179b6f349b2882ffe92cb67933b94d7e2b6d02c7b8e1ad1d4af94355f"
+cwe = "CWE-434"
+class = "file-upload"
+auth = "contributor"
+published = "2026-05-28"
+after_cutoff = false
+
+[case.truth]
+file = "gutenbee.php"
+function = "gutenbee_file_and_ext_json"
+line_start = 568
+line_end = 583
+entry_point = "media upload by an author-level user; filters wp_check_filetype_and_ext and upload_mimes"
+data_flow = "uploaded filename -> strpos($filename, '.json') !== false -> type forced to application/json -> a double extension such as name.json.php passes the upload type check"
+notes = """
+Fix 2.20.2 removes both filters (gutenbee_file_and_ext_json and gutenbee_mime_types).
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0022"
+cve = "CVE-2025-13801"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2025-13801"
+retrieved = "2026-11-02"
+slug = "yoco-payment-gateway"
+vuln_version = "3.9.0"
+fixed_version = "3.9.1"
+vuln_sha256 = "efbad527aed248a3738461a184ee94e448361920fc3fa11d644e7f23efac480f"
+fixed_sha256 = "40e17f76b47423674f957e655374b4f31fe8b1f25e80a9f7bbc876b482722f5e"
+cwe = "CWE-22"
+class = "path-traversal"
+auth = "unauthenticated"
+published = "2026-01-07"
+after_cutoff = false
+
+[case.truth]
+file = "src/Helpers/Logs.php"
+function = "callback"
+line_start = 29
+line_end = 68
+entry_point = "REST route registered in Logs::register(), parameter file"
+data_flow = "request param file -> WC_LOG_DIR . $request->get_param('file') -> file_get_contents() -> body returned"
+notes = """
+Fix 3.9.1 applies sanitize_file_name() and only serves files that start with 'yoco' and end in '.log'.
+Draft: the route's permit() callback (line 93) was not read; the advisory says unauthenticated.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0023"
+cve = "CVE-2026-11395"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-11395"
+retrieved = "2026-11-02"
+slug = "cf7-to-zapier"
+vuln_version = "5.0.0"
+fixed_version = "5.0.1"
+vuln_sha256 = "13de53a10aa0a311d286453f6021003ff423c5e5428dad7fb44cc20a120c2ae0"
+fixed_sha256 = "aca5557afbd7fab115d28e18f2d75dfe526ec6a5f201cb7f74a42ae307c7abc0"
+cwe = "CWE-918"
+class = "ssrf"
+auth = "unauthenticated"
+published = "2026-06-18"
+after_cutoff = false
+
+[case.truth]
+file = "modules/zapier/class-module-zapier.php"
+function = "pull_the_trigger"
+line_start = 58
+line_end = 150
+entry_point = "Contact Form 7 submission hook; webhook URL configured by an administrator may contain a form-field placeholder in the host"
+data_flow = "form field value substituted into the webhook URL host -> $hook_url -> wp_remote_request($hook_url, $args)"
+notes = """
+Fix 5.0.1 uses wp_safe_remote_request() (line 150). Exploitation needs a placeholder in the host part of the URL.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0024"
+cve = "CVE-2026-12242"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-12242"
+retrieved = "2026-11-02"
+slug = "adrotate"
+vuln_version = "5.17.7"
+fixed_version = "5.17.8"
+vuln_sha256 = "46cba0dc25257fc64d9153f9b14faef495a71d80c4c15337ddd4b91e1e8c3dbf"
+fixed_sha256 = "da3ce6aec7fbb882de1b8cd74bdb3b8b7f15182d3116ee4a3b51c2bcea76ecb1"
+cwe = "CWE-94"
+class = "rce"
+auth = "contributor"
+published = "2026-06-24"
+after_cutoff = false
+
+[case.truth]
+file = "adrotate-output.php"
+function = "adrotate_shortcode"
+line_start = 262
+line_end = 305
+entry_point = "[adrotate banner=..] shortcode written by a contributor-level user; output wrapped in W3TC mfunc or Borlabs fragment markers"
+data_flow = "shortcode attribute banner (trim() only) -> concatenated into a PHP code string \"echo adrotate_ad(\".$banner_id.\");\" -> evaluated by the page cache plugin"
+notes = """
+Fix 5.17.8 applies absint() to banner and a digit-list regex to group. group has the same concatenation.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0025"
+cve = "CVE-2026-2599"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-2599"
+retrieved = "2026-11-02"
+slug = "contact-form-entries"
+vuln_version = "1.4.7"
+fixed_version = "1.4.8"
+vuln_sha256 = "39739f229ecdf225454a9cf1ca870691d0c62da56dea0b08bc70577ccde0cb41"
+fixed_sha256 = "88c3ff47722aaf3fa3a7d6ac968ae8114454825358440bbdd3a9128e325e217d"
+cwe = "CWE-502"
+class = "object-injection"
+auth = "unauthenticated"
+published = "2026-03-05"
+after_cutoff = false
+
+[case.truth]
+file = "contact-form-entries.php"
+function = "download_csv"
+line_start = 2976
+line_end = 3017
+entry_point = "CSV export (download_csv) reachable without authentication according to the advisory"
+data_flow = "stored form entry field value -> maybe_unserialize($row[$field['name'].'_field']) at line 3017 -> object instantiation"
+notes = """
+Fix 1.4.8 uses vxcf_form::maybe_unserialize (a safe variant) and flattens array labels in templates/leads.php. No known POP chain in the plugin itself.
+Draft: the unauthenticated reachability was not verified.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0026"
+cve = "CVE-2025-14478"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2025-14478"
+retrieved = "2026-11-02"
+slug = "demo-importer-plus"
+vuln_version = "2.0.9"
+fixed_version = "2.0.10"
+vuln_sha256 = "fb78cecc3e1b43a15e9f4f2e2d0964d3f4d6403ba434676a9c09975d0b2d361f"
+fixed_sha256 = "9bfc5bfee2af55a0bd8779fa72300e238da071e29dadd9bf9ee2418983c4c3a9"
+cwe = "CWE-611"
+class = "xxe"
+auth = "contributor"
+published = "2026-01-17"
+after_cutoff = false
+
+[case.truth]
+file = "inc/importers/class-demo-importer-plus-sites-helper.php"
+function = "get_svg_dimensions"
+line_start = 86
+line_end = 101
+entry_point = "SVG upload handling (add_svg_image_support) by an author-level user"
+data_flow = "uploaded SVG file path -> simplexml_load_file() with external entities enabled (PHP older than 8.0) -> XXE"
+notes = """
+Fix 2.0.10 loads the file with DOMDocument and LIBXML_NONET. Only PHP < 8.0 is affected.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0027"
+cve = "CVE-2026-1793"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-1793"
+retrieved = "2026-11-02"
+slug = "bdthemes-element-pack-lite"
+vuln_version = "8.3.17"
+fixed_version = "8.3.18"
+vuln_sha256 = "0d1595f6b8cf46a4e823b878ecca96149c2f0c0bcd438ce7915277ab80cd9d2e"
+fixed_sha256 = "c379530cd4cc611dc6574db20095b4b6388e803389f9e8ef25829fa468822ea8"
+cwe = "CWE-22"
+class = "path-traversal"
+auth = "contributor"
+published = "2026-02-15"
+after_cutoff = false
+
+[case.truth]
+file = "modules/svg-image/widgets/svg-image.php"
+function = "render_svg"
+line_start = 850
+line_end = 884
+entry_point = "Element Pack SVG Image Elementor widget, image url setting of a contributor-level user"
+data_flow = "widget setting image.url -> strpos prefix check only -> $basedir . substr($svg_file, strlen($baseurl)) containing '..' -> file_get_contents() -> echoed"
+notes = """
+Fix 8.3.18 rejects '..' in the relative path.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0028"
+cve = "CVE-2026-7048"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-7048"
+retrieved = "2026-11-02"
+slug = "photo-gallery"
+vuln_version = "1.8.40"
+fixed_version = "1.8.41"
+vuln_sha256 = "853ae907b5309f208eb5e01925539d507e68a13bcba4f41a27233d5f10b4185c"
+fixed_sha256 = "48705d362c7c0c6b9093c9c8d5e586609b687eb0b42bfc7b6fbefe8426cf3604"
+cwe = "CWE-89"
+class = "sqli"
+auth = "contributor"
+published = "2026-05-28"
+after_cutoff = false
+
+[case.truth]
+file = "framework/WDWLibrary.php"
+function = "get_image_rows_data"
+line_start = 1246
+line_end = 1358
+entry_point = "gallery shortcode / AJAX with the order_by parameter, contributor level"
+data_flow = "order_by -> $sort_by (small allow-list that still lets other values through) and $sort_direction -> concatenated into ORDER BY of the query at line 1358 (prepare() does not cover the ORDER BY clause)"
+notes = """
+Fix 1.8.41 reworks sort_by and sort_direction handling into a closed list.
+Draft: the exact bypass in the old allow-list was not traced.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0029"
+cve = "CVE-2026-9757"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-9757"
+retrieved = "2026-11-02"
+slug = "geo-my-wp"
+vuln_version = "4.5.5"
+fixed_version = "4.5.5.1"
+vuln_sha256 = "338f47741da6f3dac759b5d5e91ef81fb4bd8ea18aac3487f9d46979d64d22eb"
+fixed_sha256 = "9dd9672422550d342964a6947b4719d9c980e7ce7c4a935a829236829cbe25a7"
+cwe = "CWE-89"
+class = "sqli"
+auth = "unauthenticated"
+published = "2026-05-30"
+after_cutoff = false
+
+[case.truth]
+file = "includes/gmw-functions.php"
+function = "gmw_get_locations_within_boundaries_sql"
+line_start = 669
+line_end = 681
+entry_point = "front-end search form request; swlatlng and nelatlng read from $_SERVER['QUERY_STRING'] through parse_str()"
+data_flow = "swlatlng / nelatlng -> explode(',') -> fragments interpolated into a BETWEEN clause with no is_numeric() check -> SQL query"
+notes = """
+Fix 4.5.5.1 adds gmw_parse_latlng_boundary() and drops invalid values before the SQL is built. Callers: plugins/members-locator/includes/class-gmw-members-locator-form.php:71 and posts-locator.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0030"
+cve = "CVE-2026-2257"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-2257"
+retrieved = "2026-11-02"
+slug = "getgenie"
+vuln_version = "4.3.2"
+fixed_version = "4.3.3"
+vuln_sha256 = "e5e92a55415069298d6f594ad432ad606ada7da5e11fb4300f3dadc7abf770eb"
+fixed_sha256 = "299cc3250bff0135a5ca512de7cc6b07f2fb50ce8cda2d91a1cf5c5812b89917"
+cwe = "CWE-639"
+class = "missing-authz"
+auth = "contributor"
+published = "2026-03-13"
+after_cutoff = false
+
+[case.truth]
+file = "app/Api/Store.php"
+function = "action"
+line_start = 23
+line_end = 75
+entry_point = "REST route handled by Store::action, parameters post_id and key (author level)"
+data_flow = "request post_id (no ownership check; capability checked is publish_posts) -> update_post_meta($post_id, prefix.$key, wp_slash($data)) with unsanitised body -> stored XSS in the Competitor view"
+notes = """
+Fix 4.3.3 checks current_user_can('edit_post', $post_id), applies wp_kses_post() to the data, and in GetGenieChat.php adds an ownership check on the chat conversation (app/Api/GetGenieChat.php:75): not labelled.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0031"
+cve = "CVE-2025-14610"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2025-14610"
+retrieved = "2026-11-02"
+slug = "tablemaster-for-elementor"
+vuln_version = "1.3.6"
+fixed_version = "1.3.8"
+vuln_sha256 = "34b5b64384f605200c4a2be19339e703b707571206c50e912c3d97afb2811687"
+fixed_sha256 = "6b29815e91c31bcffddc21a621fb2ad6be96e5b657b95138a7a46a9ae410c979"
+cwe = "CWE-918"
+class = "ssrf"
+auth = "contributor"
+published = "2026-01-28"
+after_cutoff = false
+
+[case.truth]
+file = "modules/data-table/widgets/data-table.php"
+function = "get_csv_data"
+line_start = 441
+line_end = 451
+entry_point = "Data Table Elementor widget, csv_url setting of an author-level user"
+data_flow = "settings csv_url -> esc_url_raw() only -> wp_remote_get($csv_url) -> response body parsed and shown"
+notes = """
+Fix 1.3.8 adds is_safe_external_url() (wp_http_validate_url, http/https only, private hosts rejected). get_json_data() (line 596) has the same fetch pattern.
+Draft.
+"""
+drafted_by = "claude"
