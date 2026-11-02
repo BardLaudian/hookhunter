@@ -1,0 +1,2 @@
+condition,cases,vuln_runs,fixed_runs,recall,recall_ci_low,recall_ci_high,recall_at_3,false_alarm_rate,findings_per_vuln_run,unmatched_per_vuln_run,cost_usd,cost_per_hit,mean_cost_per_run,skill_invoked_rate,mean_turns
+C-full,6,30,12,0.4666666666666666,0.13333333333333333,0.7999999999999999,0.3,0.0,2.8,2.3333333333333335,2.94592181,0.21042298642857143,0.07014099547619049,0.9761904761904762,44.26190476190476
