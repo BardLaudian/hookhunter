@@ -19,6 +19,7 @@ class = "sqli"
 auth = "unauthenticated"
 published = "2026-07-11"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "lib/Schedule.php"
@@ -53,6 +54,7 @@ class = "object-injection"
 auth = "unauthenticated"
 published = "2026-08-22"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "includes/class-ws-form-common.php"
@@ -88,6 +90,7 @@ class = "rce"
 auth = "contributor"
 published = "2026-09-19"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "public/class-save-as-pdf-pdfcrowd-public.php"
@@ -122,6 +125,7 @@ class = "privesc"
 auth = "subscriber"
 published = "2026-10-01"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "includes/MCP/Server.php"
@@ -156,6 +160,7 @@ class = "reflected-xss"
 auth = "unauthenticated"
 published = "2026-09-18"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "includes/module-base.php"
@@ -190,6 +195,7 @@ class = "missing-authz"
 auth = "unauthenticated"
 published = "2026-10-10"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "admin/class-wf-woocommerce-packing-list-admin.php"
@@ -224,6 +230,7 @@ class = "reflected-xss"
 auth = "unauthenticated"
 published = "2026-08-05"
 after_cutoff = true
+split = "test"
 
 [case.truth]
 file = "widgets/widget-football-pool-shoutbox.php"
@@ -256,6 +263,7 @@ class = "info-disclosure"
 auth = "unauthenticated"
 published = "2026-07-11"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "templates/frontend/render.php"
@@ -288,6 +296,7 @@ class = "file-inclusion"
 auth = "admin"
 published = "2026-08-01"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "includes/wpinv-template-functions.php"
@@ -320,6 +329,7 @@ class = "path-traversal"
 auth = "subscriber"
 published = "2026-09-11"
 after_cutoff = true
+split = "test"
 
 [case.truth]
 file = "includes/class-forms.php"
@@ -352,6 +362,7 @@ class = "reflected-xss"
 auth = "unauthenticated"
 published = "2026-09-09"
 after_cutoff = true
+split = "test"
 
 [case.truth]
 file = "modules/woofilters/class-woobewoo-pf-woofilters.php"
@@ -384,6 +395,7 @@ class = "path-traversal"
 auth = "unauthenticated"
 published = "2026-08-15"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "link-library-admin.php"
@@ -417,6 +429,7 @@ class = "object-injection"
 auth = "unauthenticated"
 published = "2026-09-12"
 after_cutoff = true
+split = "test"
 
 [case.truth]
 file = "src/Tribe/Views/V2/Widgets/Service_Provider.php"
@@ -450,6 +463,7 @@ class = "stored-xss"
 auth = "contributor"
 published = "2026-09-01"
 after_cutoff = true
+split = "test"
 
 [case.truth]
 file = "framework/features/blocks/dynamic-data/block.php"
@@ -484,6 +498,7 @@ class = "stored-xss"
 auth = "contributor"
 published = "2026-10-10"
 after_cutoff = true
+split = "dev"
 
 [case.truth]
 file = "includes/class-kadence-blocks-google-fonts.php"
@@ -518,6 +533,7 @@ class = "info-disclosure"
 auth = "contributor"
 published = "2026-07-13"
 after_cutoff = true
+split = "test"
 
 [case.truth]
 file = "Nextend/Framework/Content/WordPress/WordPressContent.php"
@@ -551,6 +567,7 @@ class = "file-inclusion"
 auth = "unauthenticated"
 published = "2026-10-14"
 after_cutoff = true
+split = "test"
 
 [case.truth]
 file = "src/Workflow/Placeholder/Builtin/Order/OrderProductsOrdered.php"
@@ -583,6 +600,7 @@ class = "rce"
 auth = "admin"
 published = "2026-08-16"
 after_cutoff = true
+split = "test"
 
 [case.truth]
 file = "includes/Services/Receipt_Renderer_Factory.php"
@@ -617,6 +635,7 @@ class = "csrf"
 auth = "unauthenticated"
 published = "2026-02-18"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "php/Admin/Init.php"
@@ -649,6 +668,7 @@ class = "open-redirect"
 auth = "unauthenticated"
 published = "2026-02-18"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "includes/classes/class-fpsml-shortcode.php"
@@ -681,6 +701,7 @@ class = "file-upload"
 auth = "contributor"
 published = "2026-05-28"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "gutenbee.php"
@@ -713,6 +734,7 @@ class = "path-traversal"
 auth = "unauthenticated"
 published = "2026-01-07"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "src/Helpers/Logs.php"
@@ -745,6 +767,7 @@ class = "ssrf"
 auth = "unauthenticated"
 published = "2026-06-18"
 after_cutoff = false
+split = "dev"
 
 [case.truth]
 file = "modules/zapier/class-module-zapier.php"
@@ -777,6 +800,7 @@ class = "rce"
 auth = "contributor"
 published = "2026-06-24"
 after_cutoff = false
+split = "dev"
 
 [case.truth]
 file = "adrotate-output.php"
@@ -809,6 +833,7 @@ class = "object-injection"
 auth = "unauthenticated"
 published = "2026-03-05"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "contact-form-entries.php"
@@ -841,6 +866,7 @@ class = "xxe"
 auth = "contributor"
 published = "2026-01-17"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "inc/importers/class-demo-importer-plus-sites-helper.php"
@@ -873,6 +899,7 @@ class = "path-traversal"
 auth = "contributor"
 published = "2026-02-15"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "modules/svg-image/widgets/svg-image.php"
@@ -905,6 +932,7 @@ class = "sqli"
 auth = "contributor"
 published = "2026-05-28"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "framework/WDWLibrary.php"
@@ -937,6 +965,7 @@ class = "sqli"
 auth = "unauthenticated"
 published = "2026-05-30"
 after_cutoff = false
+split = "dev"
 
 [case.truth]
 file = "includes/gmw-functions.php"
@@ -969,6 +998,7 @@ class = "missing-authz"
 auth = "contributor"
 published = "2026-03-13"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "app/Api/Store.php"
@@ -1001,6 +1031,7 @@ class = "ssrf"
 auth = "contributor"
 published = "2026-01-28"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "modules/data-table/widgets/data-table.php"
@@ -1033,6 +1064,7 @@ class = "file-upload"
 auth = "admin"
 published = "2026-01-17"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "src/class-filr-uploader.php"
@@ -1065,6 +1097,7 @@ class = "file-upload"
 auth = "admin"
 published = "2026-06-06"
 after_cutoff = false
+split = "dev"
 
 [case.truth]
 file = "includes/admin/communications/comms-functions.php"
@@ -1097,6 +1130,7 @@ class = "missing-authz"
 auth = "subscriber"
 published = "2026-06-19"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "includes/rest-api.php"
@@ -1130,6 +1164,7 @@ class = "sqli"
 auth = "admin"
 published = "2026-05-15"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "includes/classes/class.dashboard.php"
@@ -1162,6 +1197,7 @@ class = "object-injection"
 auth = "unauthenticated"
 published = "2026-02-28"
 after_cutoff = false
+split = "dev"
 
 [case.truth]
 file = "lib/vendor/brandonwamboldt/wp-orm/src/BaseModel.php"
@@ -1194,6 +1230,7 @@ class = "privesc"
 auth = "unauthenticated"
 published = "2026-03-21"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "includes/Di/Service/Auth/AuthTrails.php"
@@ -1226,6 +1263,7 @@ class = "info-disclosure"
 auth = "contributor"
 published = "2026-06-18"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "inc/cpabc_apps_go.inc.php"
@@ -1258,6 +1296,7 @@ class = "rce"
 auth = "unauthenticated"
 published = "2026-01-23"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "bp-core/bp-core-functions.php"
@@ -1290,6 +1329,7 @@ class = "ssrf"
 auth = "unauthenticated"
 published = "2026-02-05"
 after_cutoff = false
+split = "test"
 
 [case.truth]
 file = "image-viewer-block.php"

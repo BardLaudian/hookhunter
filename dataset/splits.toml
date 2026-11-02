@@ -1,0 +1,10 @@
+# Written by `wpbench split`. Commit it with cases.toml: the seed makes the assignment reproducible and auditable.
+seed = "20261102"
+assigned_on = "2026-11-02"
+method = "stratified by class; per-class shuffle seeded with seed:class; remainders to the largest fractional share"
+dev_count = 15
+test_count = 25
+pinned_dev = ["wp-0001", "wp-0002", "wp-0003", "wp-0004", "wp-0005", "wp-0006"]  # forced into dev before the draw (their failures had been read)
+
+dev = ["wp-0001", "wp-0002", "wp-0003", "wp-0004", "wp-0005", "wp-0006", "wp-0008", "wp-0009", "wp-0012", "wp-0015", "wp-0023", "wp-0024", "wp-0029", "wp-0033", "wp-0036"]
+test = ["wp-0007", "wp-0010", "wp-0011", "wp-0013", "wp-0014", "wp-0016", "wp-0017", "wp-0018", "wp-0019", "wp-0020", "wp-0021", "wp-0022", "wp-0025", "wp-0026", "wp-0027", "wp-0028", "wp-0030", "wp-0031", "wp-0032", "wp-0034", "wp-0035", "wp-0037", "wp-0038", "wp-0039", "wp-0040"]
