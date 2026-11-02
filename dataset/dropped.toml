@@ -1,0 +1,102 @@
+# Candidates read and dropped, with the reason (docs/DATASET.md, labelling protocol step 4). Metadata only.
+# Dropped on 2026-11-01 (first search) and 2026-11-02 (phase 5, batches 1 and 2).
+
+[[dropped]]
+cve = "CVE-2026-14280"
+slug = "events-manager"
+reason = "advisory and diff disagree: the 7.3.7.4 to 7.3.7.4.1 diff only changes the plugin update mechanism, no visible security fix"
+
+[[dropped]]
+cve = "CVE-2026-97652"
+slug = "wp-statistics"
+reason = "the same escaping fix repeated in about ten functions; a single-location label would be arbitrary"
+
+[[dropped]]
+cve = "CVE-2026-12231"
+slug = "exclusive-addons-for-elementor"
+reason = "fix spread over Elementor JS templates and a row-action link; the sink named by the CVE cannot be located with confidence"
+
+[[dropped]]
+cve = "CVE-2026-18325"
+slug = "forminator"
+reason = "indirect fix (kses scalar check, mime blocklist normalisation) on a 2,103-file plugin; vulnerable code cannot be pinned down"
+
+[[dropped]]
+cve = "CVE-2026-76006"
+slug = "gallery-photo-gallery"
+reason = "diff is mostly reformatting and nonce additions; the SQL injection location is not visible"
+
+[[dropped]]
+cve = "CVE-2025-11977"
+slug = "happyforms"
+reason = "diff only changes the hook that initialises the plugin"
+
+[[dropped]]
+cve = "CVE-2026-104899"
+slug = "geodirectory"
+reason = "diff is cache-key and locale changes; no security fix visible"
+
+[[dropped]]
+cve = "CVE-2026-89294"
+slug = "simply-schedule-appointments"
+reason = "diff adds a support tool; no security fix visible"
+
+[[dropped]]
+cve = "CVE-2026-103998"
+slug = "form-maker"
+reason = "advisory (reflected XSS) and diff (SQL where-clause binding) disagree"
+
+[[dropped]]
+cve = "CVE-2026-9656"
+slug = "leadin"
+reason = "diff is build assets and ABSPATH guards; no focused fix"
+
+[[dropped]]
+cve = "CVE-2026-89427"
+slug = "ad-inserter"
+reason = "the release fixes an XSS, an access check and an information disclosure at once; labels would be ambiguous"
+
+[[dropped]]
+cve = "CVE-2026-16146"
+slug = "gdpr-compliant-recaptcha-for-all-forms"
+reason = "diff adds nonce and capability checks and an empty-pattern guard; the SQL injection is not visible"
+
+[[dropped]]
+cve = "CVE-2026-18983"
+slug = "one-user-avatar"
+reason = "fix mixed with new image format support and reformatting"
+
+[[dropped]]
+cve = "CVE-2026-92243"
+slug = "add-search-to-menu"
+reason = "only a version bump differs in PHP"
+
+[[dropped]]
+cve = "CVE-2026-92212"
+slug = "jetformbuilder"
+reason = "only a version bump or vendor files differ in PHP"
+
+[[dropped]]
+cve = "CVE-2026-89100"
+slug = "woo-stripe-payment"
+reason = "only a version bump or vendor files differ in PHP"
+
+[[dropped]]
+cve = "CVE-2026-15297"
+slug = "mailin"
+reason = "the fix deletes a whole feature"
+
+[[dropped]]
+cve = "CVE-2026-15988"
+slug = "ai-engine"
+reason = "fix mixed with large unrelated changes"
+
+[[dropped]]
+cve = "CVE-2026-11981"
+slug = "give"
+reason = "fix mixed with large unrelated changes"
+
+[[dropped]]
+cve = "CVE-2026-15406"
+slug = "wp-event-solution"
+reason = "fix mixed with large unrelated changes"

@@ -207,3 +207,184 @@ Draft: not traced - which document types are reachable after the check, and whet
 drafted_by = "claude"
 reviewed_by = "BardLaudian"
 reviewed_on = "2026-11-01"
+
+[[case]]
+id = "wp-0007"
+cve = "CVE-2026-8790"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-8790"
+retrieved = "2026-11-02"
+slug = "football-pool"
+vuln_version = "2.13.4"
+fixed_version = "2.13.5"
+vuln_sha256 = "c6199b1d19c67d3d50233a2b399400af11755d648910560a74c449012a017d78"
+fixed_sha256 = "033d965b67b26d18a36e4ad09632453ad0076b24b63c9ee0a7d327b41493d9fb"
+cwe = "CWE-79"
+class = "reflected-xss"
+auth = "unauthenticated"
+published = "2026-08-05"
+after_cutoff = true
+
+[case.truth]
+file = "widgets/widget-football-pool-shoutbox.php"
+function = "html"
+line_start = 135
+line_end = 143
+entry_point = "Shoutbox widget rendered on any page; POST shouttext (nonce failure, empty text or save failure re-displays the text)"
+data_flow = "POST shouttext -> Football_Pool_Utils::post_string() -> $unsaved_text -> printf() into a <textarea> body (and the title attribute) with no escaping"
+notes = """
+Fix 2.13.5 wraps the value in esc_textarea() and the title in esc_attr().
+Draft: whether post_string() already strips tags is not confirmed.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0008"
+cve = "CVE-2026-10865"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-10865"
+retrieved = "2026-11-02"
+slug = "cost-calculator-builder"
+vuln_version = "4.0.11"
+fixed_version = "4.0.12"
+vuln_sha256 = "bd52c46e1c22451e42893d634cb5a6c1a9d898f18ceafdfff2681d72735b5a31"
+fixed_sha256 = "4d7fe6810f1250fb89dd59296d73ff28e5850ed85d71e40f2321b4555d4ddcc5"
+cwe = "CWE-200"
+class = "info-disclosure"
+auth = "unauthenticated"
+published = "2026-07-11"
+after_cutoff = true
+
+[case.truth]
+file = "templates/frontend/render.php"
+function = ""
+line_start = 54
+line_end = 62
+entry_point = "calculator frontend template rendered on any page with a calculator (shortcode)"
+data_flow = "global settings payment_gateway.cards.card_payments.{razorpay,stripe}.secretKey -> copied into $settings -> printed into the page source"
+notes = """
+Only when the 'use in all calculators' option is on. Fix 4.0.12 removes the secretKey copies in render.php and adds ccb_strip_frontend_payment_secrets() in includes/functions.php.
+Draft: PayPal client_secret exposure is at lines 69-75 of the same file (not labelled as a separate location).
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0009"
+cve = "CVE-2026-17605"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-17605"
+retrieved = "2026-11-02"
+slug = "invoicing"
+vuln_version = "2.8.56"
+fixed_version = "2.8.57"
+vuln_sha256 = "f00606ef87b85d37c8d8b4822ed901f92b771c1d520c677e89a7dbf8f5b9ba4b"
+fixed_sha256 = "6763bf7dc87d559fb523c76729093e7d959a5ebf5e7af1728336b6fca457452b"
+cwe = "CWE-98"
+class = "file-inclusion"
+auth = "admin"
+published = "2026-08-01"
+after_cutoff = true
+
+[case.truth]
+file = "includes/wpinv-template-functions.php"
+function = "getpaid_payment_form_element"
+line_start = 1417
+line_end = 1432
+entry_point = "payment form element rendering; the element array comes from a saved payment form (administrator)"
+data_flow = "$element['type'] (trimmed only) -> $element_type via extract() -> wpinv_locate_template(\"payment-forms/elements/$element_type.php\") -> template included"
+notes = """
+Fix 2.8.57 restricts the type to a list of known elements and uses extract(..., EXTR_SKIP).
+Draft: the include happens in the caller, after wpinv_locate_template(); the label points at the construction of the path.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0010"
+cve = "CVE-2026-19991"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-19991"
+retrieved = "2026-11-02"
+slug = "userswp"
+vuln_version = "1.2.70"
+fixed_version = "1.2.71"
+vuln_sha256 = "c528d6fdcec3b1fa1553ca58d16ff9abad7ac4dc8eae8be46807c378ca259012"
+fixed_sha256 = "8efb989598a5441ee279bd7232142e977eb5bbbf6e0b23d4cbeff77ed5894276"
+cwe = "CWE-22"
+class = "path-traversal"
+auth = "subscriber"
+published = "2026-09-11"
+after_cutoff = true
+
+[case.truth]
+file = "includes/class-forms.php"
+function = "upload_file_remove"
+line_start = 2429
+line_end = 2441
+entry_point = "wp_ajax_uwp_upload_file_remove (needs login and the basic nonce); the stored value is planted earlier through process_account()"
+data_flow = "account 'file' field taken from $_POST when no real upload exists (process_account) -> stored user meta -> upload_file_remove() -> uwp_get_file_relative_url() (global str_replace) -> $unlink_file -> wp_delete_file()"
+notes = """
+Fix 1.2.71 touches three places: process_account() discards file-field values that did not come from an upload, uwp_get_file_relative_url() in includes/helpers/misc.php rejects '..', and upload_file_remove() enforces realpath containment.
+Draft: the sink is the delete at 2429-2441; the planting step is in process_account() (around line 2131).
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0011"
+cve = "CVE-2026-7804"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-7804"
+retrieved = "2026-11-02"
+slug = "woo-product-filter"
+vuln_version = "3.4.2"
+fixed_version = "3.4.3"
+vuln_sha256 = "e854a6f4cda6812a82b3d72356a13f16b250ecfcc37eee6f0dc8f8e20adc73fe"
+fixed_sha256 = "9e0a0aceac31fcdab954c9aa3bf0df56ceddd58871bde3eb05b69a071221d795"
+cwe = "CWE-79"
+class = "reflected-xss"
+auth = "unauthenticated"
+published = "2026-09-09"
+after_cutoff = true
+
+[case.truth]
+file = "modules/woofilters/class-woobewoo-pf-woofilters.php"
+function = "getFilterExistsItems"
+line_start = 4063
+line_end = 4065
+entry_point = "AJAX woobewoo_pf_filters_frontend (wp_ajax_nopriv), request parameter wpf_fid with wpf_skip=1 and recalculate_filters enabled"
+data_flow = "request wpf_fid -> WooBeWoo_PF_Req::getVar() -> $fid concatenated unescaped into an inline <script> call (wpfDoActionsAfterLoad) in existsTermsJS (esc_attr only on the data-fid attribute)"
+notes = """
+Fix 3.4.3 applies absint() to wpf_fid. The same release also passes the currenturl parameter through esc_url_raw() in the controller (woobewoo_pf_filters_frontend, line 367): not labelled.
+Draft.
+"""
+drafted_by = "claude"
+
+[[case]]
+id = "wp-0012"
+cve = "CVE-2026-18855"
+source = "nvd"
+source_url = "https://nvd.nist.gov/vuln/detail/CVE-2026-18855"
+retrieved = "2026-11-02"
+slug = "link-library"
+vuln_version = "7.9.4"
+fixed_version = "7.9.5"
+vuln_sha256 = "379130efec2227c2dcb52ab3df81b7b1a5e5bf9ab4797019b8c2730f22effedd"
+fixed_sha256 = "d847388b85f2f8d539fe420cefdd547f7873b147edc8f27a2bf7d4c779adbc21"
+cwe = "CWE-22"
+class = "path-traversal"
+auth = "unauthenticated"
+published = "2026-08-15"
+after_cutoff = true
+
+[case.truth]
+file = "link-library-admin.php"
+function = "ll_delete_link_fields"
+line_start = 7852
+line_end = 7879
+entry_point = "before_delete_post hook; the link_url meta is attacker-controlled through the public link submission form"
+data_flow = "submitted link_url stored as post meta -> before_delete_post -> ll_delete_link_fields() -> path built from the stored URL with realpath() and a flawed containment test -> unlink()/wp_delete_attachment()"
+notes = """
+Needs the 'delete local file on link deletion' option and an administrator permanently deleting the link. Fix 7.9.5 deletes the function and its hook.
+The same release also fixes an SQL injection in render-link-library-alpha-filter.php and an XSS around the category title: NOT labelled, expect them as unmatched findings.
+Draft.
+"""
+drafted_by = "claude"
