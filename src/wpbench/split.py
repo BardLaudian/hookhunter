@@ -5,7 +5,8 @@ from __future__ import annotations
 import random
 import re
 import tomllib
-from collections import defaultdict
+from collections import Counter, defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -23,9 +24,10 @@ class SplitResult:
     seed: str
     dev: int
     test: int
+    pinned: tuple[str, ...] = ()  # cases forced into dev before the stratified draw
 
 
-def assign(cases: list[Case], seed: str, dev: int = 15, test: int = 25, force: bool = False) -> SplitResult:
+def assign(cases: list[Case], seed: str, dev: int = 15, test: int = 25, force: bool = False, pin_dev: Iterable[str] = ()) -> SplitResult:
     """Assign every case to dev or test. Deterministic for a given seed and set of cases, stratified by class.
 
     Refuses to touch a dataset that already has assignments unless force is set: the test split is frozen once it exists.
@@ -38,21 +40,41 @@ def assign(cases: list[Case], seed: str, dev: int = 15, test: int = 25, force: b
         raise SplitError("--dev and --test must be positive")
     n = len(cases)
     dev_total = max(1, min(n - 1, round(n * dev / (dev + test)))) if n > 1 else 1
+    pins = set(pin_dev)
+    unknown = pins - {c.id for c in cases}
+    if unknown:
+        raise SplitError(f"cannot pin unknown case(s): {', '.join(sorted(unknown))}")
+    if pins and len(pins) > dev_total:
+        raise SplitError(f"{len(pins)} pinned cases do not fit in {dev_total} dev slots")
     by_class: dict[str, list[Case]] = defaultdict(list)
     for c in cases:
         by_class[c.cls].append(c)
     quota = {cls: len(group) * dev_total / n for cls, group in by_class.items()}
-    take = {cls: int(q) for cls, q in quota.items()}
-    remainder = dev_total - sum(take.values())
-    for cls in sorted(quota, key=lambda k: (-(quota[k] - take[k]), k))[:remainder]:
-        take[cls] += 1
-    assignment: dict[str, str] = {}
+    rest = dev_total - len(pins)
+    if pins:
+        # Pinned cases already use some of each class's dev share; spread the remaining slots over what is left of the shares.
+        pinned_by_class = Counter(c.cls for c in cases if c.id in pins)
+        left = {cls: max(0.0, q - pinned_by_class[cls]) for cls, q in quota.items()}
+        total_left = sum(left.values())
+        quota = {cls: (v * rest / total_left if total_left > 0 else 0.0) for cls, v in left.items()}
+    capacity = {cls: sum(1 for c in group if c.id not in pins) for cls, group in by_class.items()}
+    take = {cls: min(int(q), capacity[cls]) for cls, q in quota.items()}
+    remainder = rest - sum(take.values())
+    order = sorted(quota, key=lambda k: (-(quota[k] - take[k]), k))
+    i = 0
+    while remainder > 0 and any(take[k] < capacity[k] for k in take):
+        k = order[i % len(order)]
+        i += 1
+        if take[k] < capacity[k]:
+            take[k] += 1
+            remainder -= 1
+    assignment: dict[str, str] = {cid: "dev" for cid in pins}
     for cls in sorted(by_class):
-        ids = sorted(c.id for c in by_class[cls])
+        ids = sorted(c.id for c in by_class[cls] if c.id not in pins)
         random.Random(f"{seed}:{cls}").shuffle(ids)
         for i, cid in enumerate(ids):
             assignment[cid] = "dev" if i < take[cls] else "test"
-    return SplitResult(assignment, seed, sum(v == "dev" for v in assignment.values()), sum(v == "test" for v in assignment.values()))
+    return SplitResult(assignment, seed, sum(v == "dev" for v in assignment.values()), sum(v == "test" for v in assignment.values()), tuple(sorted(pins)))
 
 
 _TABLE = re.compile(r"^\s*\[")
@@ -104,6 +126,7 @@ def write_splits_file(path: Path, result: SplitResult) -> None:
         'method = "stratified by class; per-class shuffle seeded with seed:class; remainders to the largest fractional share"',
         f"dev_count = {result.dev}",
         f"test_count = {result.test}",
+        *([f"pinned_dev = [{', '.join(chr(34) + i + chr(34) for i in result.pinned)}]  # forced into dev before the draw (their failures had been read)"] if result.pinned else []),
         "",
     ]
     for role in ("dev", "test"):

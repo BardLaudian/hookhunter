@@ -295,12 +295,13 @@ def split(
     test: Annotated[int, typer.Option(help="Target test size.")] = 25,
     write: Annotated[bool, typer.Option(help="Write the assignment into cases.toml and splits.toml (default: dry run).")] = False,
     force: Annotated[bool, typer.Option(help="Reassign even if cases already have a split.")] = False,
+    pin_dev: Annotated[list[str] | None, typer.Option("--pin-dev", help="Case id forced into dev before the draw (repeatable); use it for cases whose failures were already read.")] = None,
     dataset: DatasetOpt = DEFAULT_DATASET,
 ) -> None:
     """Assign cases to dev and test, stratified by class and reproducible from the seed."""
     cases = _load(dataset)
     try:
-        result = assign(cases, seed, dev, test, force)
+        result = assign(cases, seed, dev, test, force, pin_dev or ())
     except SplitError as exc:
         err.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
@@ -308,7 +309,7 @@ def split(
     for c in sorted(cases, key=lambda x: (x.cls, x.id)):
         table.add_row(c.id, c.cls, result.assignment[c.id])
     console.print(table)
-    console.print(f"dev {result.dev}, test {result.test}, seed {seed!r}")
+    console.print(f"dev {result.dev}, test {result.test}, seed {seed!r}" + (f", pinned to dev: {', '.join(result.pinned)}" if result.pinned else ""))
     if write:
         dataset.write_text(apply_to_text(dataset.read_text(), result.assignment))
         write_splits_file(dataset.with_name("splits.toml"), result)
