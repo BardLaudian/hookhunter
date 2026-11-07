@@ -67,6 +67,10 @@ Capability checks anywhere in the function count as `guarded`. Grep for what rem
   (horizontal and vertical at once); or the check is `promote_users` without `promote_user` on that id.
 - **Mass assignment.** Saving every submitted field as user meta or as `wp_update_user` input lets the request name
   `{prefix}capabilities`, `role`, `user_pass` or `user_email`. Look for loops over `$_POST`/`$_REQUEST` and arrays passed straight through.
+- **Meta-key denylist.** Code that writes request-named user meta and removes dangerous keys with a list (`wp_capabilities`, `user_level`, `session_tokens`) is bypassable unless the **comparison**
+  matches what the database does: `stripos` differs from MySQL's collation (accented or case-folded variants of the same key), whitespace and control characters, and the table prefix
+  (`$wpdb->get_blog_prefix()` on multisite is not `$wpdb->base_prefix`; a prefix changed at install). Look at what names the filter and what is stored, then recommend an allow-list of keys.
+  `wp_sinks.py --sink meta-key` lists `update_user_meta` / `add_user_meta` calls whose key is a variable.
 - **Profile hooks.** `personal_options_update`, `edit_user_profile_update` and `profile_update` callbacks that read
   `$_POST` and write meta without a field allow-list; `show_in_rest` user meta registered without `auth_callback`.
 - **Registration bypass.** Custom signup that ignores `users_can_register`, or accepts a role. Creating a low-privilege

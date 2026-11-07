@@ -33,6 +33,11 @@ reaches the handler, and `wp-traps.md` 11-13.
 3. For stored values, follow the write: which entry point, which tier, which sanitiser at write time?
 4. Name the **victim**: a visitor, a logged-in user, an administrator. Script that runs in an administrator's browser
    can create users and edit plugin files, so unauthenticated-writes-admin-reads is the strongest shape.
+4b. **Stored from logs and records (the usual unauthenticated-to-admin path).** List the fields an anonymous request can make the plugin keep: a failed-login username, `User-Agent`,
+   `Referer`, request URI, form-entry fields, comment/author fields, `X-Forwarded-For`. Find where the plugin writes them (log tables, options, post meta, transients), then where an admin
+   page reads and prints them. Admin tables are often built by string concatenation (`$cell = '<td>' . $row->field . '</td>'`) and echoed once at the end, so the vulnerable line is an
+   assignment, not an `echo`: `wp_sinks.py --class xss --sink html-build` lists those (`origin: stored` = value read from a query result, option or meta). A write-side `esc_sql` or
+   `sanitize_text_field` does not make the value safe in HTML.
 5. Check that the response is HTML. JSON with `Content-Type: application/json` (`wp_send_json`), `text/plain` and
    downloads do not execute script (trap 11 in `wp-traps.md` when the header is missing).
 6. For JavaScript files, search for the sinks in section 1 and trace their inputs to server-provided data.

@@ -56,8 +56,11 @@ Read from core `trunk` on 2026-11-01.
   `$wpdb->get_var( "… WHERE name = '" . wp_unslash( $_GET['n'] ) . "'" )` is injectable.
 - **Numeric position.** `WHERE id = $id`, `LIMIT $n`, `IN ($ids)`: slashes do nothing without quotes. `esc_sql()` does nothing either
   (it escapes quote characters). Only a cast (`absint`, `(int)`, `array_map( 'absint', … )`) or `%d` works.
+- **Placeholder defeated by interpolation, including a column name.** `prepare( "SELECT id, {$col} FROM {$table} WHERE lang = %s", $lang )` is injectable when `$col` comes from the request (`sanitize_text_field` keeps it): a whitelist is the only fix. `wp_sinks.py` marks these `prepare(format interpolates $col)`; comments between `prepare(` and the format string no longer hide the variable.
 - **Placeholder defeated by interpolation.** `prepare( "… WHERE a = %s AND b = $col" )`, `prepare( "… LIKE '%$term%'" )`.
 - **Unquoted numbered placeholder.** `prepare( 'SELECT … WHERE name = %1$s', $name )` leaves `$name` unquoted.
+- **`esc_like()` is not a quote escaper, and `posts_search` clauses are strings.** It escapes only `% _ \\`. A `posts_search` / `posts_where` / `query` filter that writes `LIKE '{$like}'` into the clause
+  leaves the quote alone, and magic-quoted input (`\\'`) gets its backslash doubled by `esc_like`, which frees the quote. `wp_sinks.py --sink sql-build` lists SQL built as text with a quoted variable.
 - **`LIKE` done halfway.** Wildcards written into the query string; `esc_like()` missing, or called after `prepare()`.
 - **`IN` lists.** `implode( ',', $_POST['ids'] )` or `implode( ',', array_map( 'esc_sql', … ) )` in an unquoted list.
 - **`ORDER BY` from the request.** `ORDER BY $_GET['orderby'] $_GET['order']` with only `esc_sql` or `sanitize_text_field`; need an allow-list

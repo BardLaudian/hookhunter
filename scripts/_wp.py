@@ -137,3 +137,73 @@ def literal(text: str) -> str | None:
 
 def names_in(text: str, pattern: re.Pattern[str]) -> list[str]:
     return sorted({m.group().rstrip("( \t").strip() for m in pattern.finditer(text)})
+
+
+_REACH_DEPTH = 3
+_REACH_MAX_CANDIDATES = 8
+
+
+def _callees(idx: Index, f: Func) -> list[Func]:
+    out: list[Func] = []
+    for c in idx.calls_in(f):
+        if c.kind == "construct":
+            continue
+        if c.kind == "new":
+            cands = [g for g in idx.by_name("__construct") if g.cls.lower() == c.name.rsplit("\\", 1)[-1].lower()]
+        else:
+            cands = idx.by_name(c.name)
+            if c.kind in ("method", "static") and c.recv.lower() in ("$this", "self", "static"):
+                cands = [g for g in cands if g.cls == f.cls]
+        if 0 < len(cands) <= _REACH_MAX_CANDIDATES:
+            out += [g for g in cands if g is not f]
+    return out
+
+
+def request_reach(idx: Index, f: Func, depth: int = _REACH_DEPTH) -> dict[str, list[str]]:
+    """Superglobals read by ``f`` itself and, separately, by functions it reaches within ``depth`` calls.
+
+    Follows calls by name only (methods of ``$this``/``self`` stay in the class, ``new X`` goes to
+    X::__construct); a name with more than a few definitions is skipped. Returns
+    ``{"direct": [...], "via_callees": [...]}`` where each entry of the second list is
+    ``"$_GET (Class::method)"`` for the nearest function that reads it.
+    """
+    direct = superglobals_of(f)
+    seen = {f.index}
+    via: dict[str, str] = {}
+    frontier = [f]
+    for _ in range(depth):
+        nxt: list[Func] = []
+        for fn in frontier:
+            for g in _callees(idx, fn):
+                if g.index in seen:
+                    continue
+                seen.add(g.index)
+                nxt.append(g)
+                for sg in superglobals_of(g):
+                    via.setdefault(sg, g.qualname)
+        frontier = nxt
+    return {"direct": direct, "via_callees": sorted(f"{k} ({v})" for k, v in via.items() if k not in direct)}
+
+
+ACCOUNT_CALLS_RE = re.compile(r"^(?:wp_set_auth_cookie|reset_password|wp_set_password|wp_set_current_user|wp_signon|wp_create_user|wp_insert_user|"
+                              r"add_user_to_blog|add_existing_user_to_blog|grant_super_admin|wp_clear_auth_cookie)$", re.I)
+
+
+def reach_account_calls(idx: Index, f: Func, depth: int = _REACH_DEPTH) -> list[str]:
+    """Calls that log in, re-password or create an account, made by ``f`` or by functions it reaches within ``depth`` calls."""
+    found: dict[str, str] = {}
+    seen = {f.index}
+    frontier = [f]
+    for d in range(depth + 1):
+        nxt: list[Func] = []
+        for fn in frontier:
+            for c in idx.calls_in(fn):
+                if c.kind in ("func", "static") and ACCOUNT_CALLS_RE.match(c.name):
+                    found.setdefault(c.name, fn.qualname)
+            if d < depth:
+                for g in _callees(idx, fn):
+                    if g.index not in seen:
+                        seen.add(g.index)
+                        nxt.append(g)
+        frontier = nxt
+    return sorted(f"{k} ({v})" for k, v in found.items())

@@ -82,7 +82,8 @@ an admin setting is usually *not* accepted by triagers; see `severity.md`).
 - Plugin pages that post to themselves, or to `admin_init`, bypass all of that: the plugin must check.
 
 ### Request-time hooks: `init`, `admin_init`, `wp_loaded`, `template_redirect`, `parse_request`, `plugins_loaded`, ...
-- Run on every matching request. `wp_map.py` lists such a handler only if it reads a superglobal.
+- Run on every matching request. `wp_map.py` lists such a handler only if it reads a superglobal itself or within three calls (`superglobals_via_callees`, flag `reads-superglobals-via-callee`).
+  A capability check found only in a callee does not lower its tier (flag `cap-check-in-callee-only`): it may guard one branch.
 - **`admin_init` also fires for `admin-ajax.php` and `admin-post.php`**, so it runs for logged-out
   visitors who call those endpoints. `is_admin()` is true there, so `is_admin()` is **not** a
   permission check (see `wp-traps.md`).
@@ -116,6 +117,16 @@ an admin setting is usually *not* accepted by triagers; see `severity.md`).
 | Dynamic hook names | `wp_map.py` reports `"dynamic": true` for `'wp_ajax_' . $x`; resolve the values by reading the loop | The real action list is built at run time |
 
 ## 5. Reading a `wp_map.py` entry point
+
+- `type: boot-code`: a constructor or `run()` / `init()` / `boot()`-style method, not registered as a handler, that reads request input (other than `$_SERVER`) directly or within
+  three calls. It runs whenever the plugin creates the object at load, so treat it as reachable by every visitor and find where the object is created.
+- `type: file-level`: statements outside any function that read request input. `tier: unauth` with flag `no-abspath-guard` means the file can be requested by URL; with an
+  `ABSPATH` guard the tier is `admin` only as a low-priority placeholder: find which hook includes the file.
+- `superglobals` are read by the handler itself; `superglobals_via_callees` lists what functions up to three calls below it read (`$_COOKIE (Class::method)`).
+- `type: auth-hook`: a handler on an authentication, password or registration hook (`random_password`, `authenticate`, `registration_errors`, `retrieve_password_*`, `user_register`, ...) that reads request input. These are mostly *filters*, so they
+  are easy to miss: they run for visitors on `wp-login.php`. See `wp-traps.md` trap 23.
+- `notes`: when a plugin has hundreds of files and only a handful of entry points, the map says so (framework-style). Find the central dispatcher and read it in full.
+- Flag `is_admin-is-not-authz`: the handler calls `is_admin()` and has no capability check. See `wp-traps.md` trap 1.
 
 - `flags`: `no-cap-check` / `no-nonce` mean the pattern was not found in the handler or one call below
   it; the check may live in a hook, a base class or a helper further away. Open the code.

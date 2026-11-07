@@ -13,7 +13,7 @@ Core behaviour was read from `trunk` on 2026-11-01. Re-check a point against the
 | 0 Gate | `report.md` section 1 (audit mode only) |
 | 1 Map | `surface.md` (entry points, tiers, what core checks, surface the scripts do not list) |
 | 2 Hunt by class | `classes/<class>.md` for the class being checked, with `wp-traps.md` (checks that look safe but are not) and `sanitizers.md` (which function neutralises which class in which context) |
-| 3 Refute | `verification.md` (common procedure, statuses, reason vocabulary), then the "Refutation checklist" of the class file |
+| 3 Refute | `verification.md` (common procedure, statuses, reason vocabulary, section 3b evidence for dismissals), then the "Refutation checklist" of the class file |
 | 4 Variants | `verification.md` section 5 |
 | 5 Coverage | `verification.md` section 7, `surface.md` section 5 |
 | 6 Report | `severity.md` (vectors, `auth_required`, programme rules); `report.md` (template, audit mode only) |

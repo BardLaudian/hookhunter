@@ -12,6 +12,7 @@ the rules for choosing a status, and the mistakes that most often produce false 
 |---|---|---|
 | `confirmed` | Every link of the chain holds and no refutation applies | `file:line` for the entry point registration, the source read, each guard examined (and why it fails or is absent), and the sink; the reasoning in prose, **no payload** |
 | `needs-dynamic-check` | The chain is complete statically except for one named runtime fact | The same chain, plus the single unknown named exactly (a filter, a constant, a server rule, a PHP or library version, another plugin) |
+| `not-reviewed` | A dismissal made without the evidence of section 3b | Nothing: it counts as a coverage gap, not as a result |
 | `refuted` | A specific check kills the candidate | A one-line reason from the vocabulary below, with `file:line` of the code that refutes it |
 
 "I could not find the bug" is not `refuted`. A candidate you cannot finish reading is `needs-dynamic-check` with the unread part named,
@@ -40,6 +41,9 @@ Stop at the first check that refutes. Record which one.
    Look one call down (`wp_map.py` `callee`) and in parents and hooks.
 5. **Guard adequacy.** For escapers, sanitisers, validators: does this function neutralise this class **in this context** for **the value that reaches the sink**
    (`sanitizers.md`)? Was the value changed after the guard? Is the guard applied to every variable in the expression (`wp_sinks.py` strips only the wrapped part)?
+5b. **Defence in depth and denylists are not refutations.** Before using a `guard-*` reason, write one line: *what this guard does not cover*. A denylist (extensions, meta keys, characters, hosts),
+   a name-based or format check, and layers that depend on the server (`.htaccess`, `chmod`, a random directory, `open_basedir`) leave a gap if the input is normalised later or if the layer is
+   absent (nginx, a restored backup, a CDN). With such a guard as the only reason, the status is `needs-dynamic-check` (name the layer or the normalisation), not `refuted`.
 6. **The sink does what the claim says.** The echo is in an HTML response, not JSON with a header (`wp-traps.md` 11); the include has a controllable path, not only a fixed
    path with a fixed suffix; the deserialiser sees a PHP-serialised string; the parser has entity handling on; the request goes to a host the attacker picks.
 7. **Environment and version.** Does the outcome depend on a constant (`DISALLOW_UNFILTERED_HTML`, `WP_HTTP_BLOCK_EXTERNAL`), a filter, multisite, PHP below 8,
@@ -67,6 +71,7 @@ One-line reasons for `refuted` (use one, add the location):
 | `guard-escape-context` | escaped for this exact context at output |
 | `guard-prepared` / `guard-cast` / `guard-allowlist` | parameterised, narrowed, or limited to a fixed list |
 | `guard-path-containment` | `realpath` plus prefix test with separator, or a server-chosen name |
+| `guard-allowlist-final` | allow-list applied to the final, normalised value that reaches the sink (a denylist alone is not this reason) |
 | `guard-mac` | verified signature before use |
 | `guard-validated-redirect` / `guard-safe-client` | `wp_validate_redirect` / `wp_safe_remote_*` or equivalent on the same string |
 | `guard-parser-defaults` | XML parsed with default flags on a safe libxml |
@@ -75,6 +80,20 @@ One-line reasons for `refuted` (use one, add the location):
 | `admin-only` | the caller already holds the privilege the effect grants |
 | `expected-functionality` | the behaviour is the feature, correctly gated |
 | `trivial-effect` | no meaningful change of state or data |
+
+## 3b. A dismissal needs recorded evidence
+
+Before you drop a candidate for any of the three reasons below, open the code and record what you read. A dismissal with no recorded evidence is **`not-reviewed`**,
+not `refuted`: it goes to the coverage list and counts as a gap. Applies to candidates from `wp_join.py`, `wp_sinks.py`, the map or your own reading.
+
+| You want to say | Record |
+|---|---|
+| "admin only" / "requires login" | the line that **registers** the hook (`add_action('wp_ajax_nopriv_...')`, the menu `capability`, the `permission_callback`) **and** the line of the capability check, with the capability it names. A tier from the map is not evidence: `capability-check (static hint)` can sit in another branch, in a callee, or after the sink. The `nopriv` twin of a `wp_ajax_` hook is a separate registration: look for it |
+| "the value is sanitised / restricted" | the exact line of the sanitiser, **which characters it lets through** (`FILTER_SANITIZE_NUMBER_INT` keeps `+` and `-`; `esc_like` does not escape quotes; `sanitize_text_field` keeps quotes), and, if the value reaches SQL or another sink, why those characters are harmless **there** (quoted? cast afterwards? numeric position?) |
+| "permissions are fine" | the permission function (`permission_callback`, `*_permissions_check`, a base-class `check_*`) opened and read, **every branch**: what it returns for each role and for each request parameter (`context`, `action`, `id`) that changes the path. "A permission callback exists" is not evidence |
+
+Write this evidence in the `reason`/notes of the candidate. When the registration or the permission function cannot be found, the candidate is `needs-dynamic-check` with
+that named, never `refuted`.
 
 ## 4. Where each class is usually refuted
 
@@ -116,6 +135,7 @@ False positives:
 - Counting a theoretical gadget, a debug setting, a version string or an administrator-only effect as impact.
 
 False negatives:
+- Marking `refuted` because the file is also protected by `.htaccess`, `chmod`, a random directory, or a denylist (check 5b).
 - Marking `refuted` because a safe-sounding function is present (`sanitize_text_field`, `esc_url_raw`, a nonce, `is_admin()`). Ask what it guarantees for this context.
 - Believing `current_user_can( 'edit_posts' )` protects an action on a specific post (`wp-traps.md` 5).
 - Stopping the hunt after one finding in a file. The same author usually repeats the pattern.

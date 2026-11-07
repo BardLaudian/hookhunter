@@ -48,14 +48,33 @@ In audit mode for a disclosure report, do the version and prior-art checks of `r
 
 Run `python3 ${CLAUDE_SKILL_DIR}/scripts/wp_map.py <plugin-dir>` and read the ranked entry points: type, tier (`unauth`, `subscriber`, `author+`, `admin`, `system`),
 `nonce_check`, `cap_check`, `superglobals`, `flags`. The hints are not proof: a check can live in a callee, a base class or an earlier hook.
+Also read the entries of type `boot-code` (constructors and `run()`-style methods that read request input) and `file-level`, and the flags `reads-superglobals-via-callee`,
+`cap-check-in-callee-only` and `is_admin-is-not-authz`: `is_admin()` is true for visitors calling `admin-ajax.php`, so it never counts as authorization.
 Open `reference/surface.md`. Read the `skipped` list (`vendor/`, large files) and put it in coverage. For a large plugin start with `--top 40` and say what remains.
+Use `Grep` recursively (`-r`, or the Grep tool without a path filter): subdirectories such as `includes/handler/` hide the second copy of a pattern. If the map's `notes` says the plugin looks framework-style, find its central dispatcher and read it in full before hunting.
 Grep for surface the script does not list (`reference/surface.md` section 4): files without an `ABSPATH` guard, `save_post`, profile and comment hooks, `heartbeat_received`, upload hooks, query vars, JavaScript files.
 
 ### 2. Hunt by class
 
+Start with `python3 ${CLAUDE_SKILL_DIR}/scripts/wp_join.py <dir>`: it joins the map with the sinks and ranks (entry point, reachable sink) pairs, unauthenticated first. A tier that cannot be
+confirmed (static capability hint, unresolved handler) moves a candidate **up**. Read `unresolved_entries` and `unreached_sinks` too: they are listed so nothing is skipped silently.
+Open the top candidates, then continue with the class lists below for what the join cannot see.
+Then do the **walk**: `python3 ${CLAUDE_SKILL_DIR}/scripts/wp_walk.py <dir>` lists, per function, the sinks whose arguments are built from a request value (superglobals, `$this->get('x')` getters, `$_SERVER['REQUEST_URI'|'PHP_SELF'|'HTTP_HOST']`,
+a two-argument `add_query_arg`) with nothing neutralising them, including functions that no mapped entry reaches (`reached_by: []`: admin pages registered through a variable, routers, template helpers). Open **every** function row, and every `checklist`
+entry of type `menu` (admin page), `ajax`, `admin-post`, `rest` or `shortcode`; a hint in an advisory or a plugin's description is never the reason to open or skip one. Put in the coverage note the checklist entries you did not read.
+It does not follow a value through a wrapper object (`new Wrapper($path)->read()`), a function argument, a stored option or a returned URL: read those controllers by hand.
 Take entry points from the top of the map (unauthenticated first). Follow request data to sinks:
 
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/wp_sinks.py <dir> --class <classes> --risk unguarded` lists dangerous calls with the guards found in their arguments and function.
+  For `sqli` also run `--risk unguarded,guarded` and open every `guarded` row whose guard is only `prepare`, `esc_sql` or `esc_like`: read the format string of the `prepare()`; a value interpolated outside a placeholder
+  (a column name, `ORDER BY`, `LIMIT`, an `IN (...)` list) is not protected, and the script only flags the cases it can see (`guards_in_args` then says `prepare(format interpolates $x)`). Table names and `%s` lists are not flagged.
+  For `file-ops`, `file-inclusion`, `ssrf`, `open-redirect` and `xxe` run it with `--risk unguarded,guarded` and open every `guarded` row that carries `function_guard_accepted`: it names the
+  guard the script believed, and a guard that does not act on the sink's value, or only logs, does not protect it (`reference/wp-traps.md` trap 20).
+- Three checks that are not a single dangerous call, all from `wp_sinks.py --sink <name>`: `html-build` (HTML assembled from a stored or request value, usually printed elsewhere: the stored-XSS-in-admin-table shape),
+  `unchecked-guard-result` (a `check_*`/`verify_*` helper returns an error object and the caller never tests it), `meta-key` (user-meta key is a variable: denylists are bypassable),
+  `sql-build` (a quoted variable inside SQL assembled as text, e.g. in a `posts_search` filter), `safety-flag-disabled` (a call passes `false` for a `$safe`/`$verify` parameter that defaults to `true`)
+  and `filetype-override` (a filter on `wp_check_filetype_and_ext` / `upload_mimes` that overrides or widens the file type check). Sinks with `origin: stored` read their value from an option, meta, cart or session: find who writes it. In `wp_map.py`, handlers with
+  `account-control-reachable` call login / password-reset / account-creation functions and rank first in their tier.
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/wp_xref.py <dir> <function-method-or-hook>` gives definitions, callers, registrations and callees.
 - Read each handler in full. Then Grep for what the scripts cannot see: `vendor/`, JavaScript, and anything reached through a parameter, property or other function (the dispatch rules only follow request data inside one function).
 
@@ -80,7 +99,7 @@ Write each candidate as one sentence: **[tier]** reaches **[entry point, file:li
 
 ### 3. Refute
 
-Apply `reference/verification.md` to every candidate. Try to kill it: dead code, wrong tier, source not attacker-controlled, a guard that fits the sink's context and stops execution,
+Apply `reference/verification.md` to every candidate. **Dropping a candidate as "admin only", "sanitised" or "permissions fine" requires recorded evidence (`verification.md` section 3b): the registering hook line and the capability check, the sanitiser line and the characters it allows, or the permission function read in every branch. Without it the candidate is `not-reviewed` and goes to coverage, not to `refuted`.** A denylist, or protection that depends on the server (`.htaccess`, `chmod`, a random directory), is not enough to mark `refuted`: use `needs-dynamic-check` and name the gap (check 5b). Try to kill it: dead code, wrong tier, source not attacker-controlled, a guard that fits the sink's context and stops execution,
 expected functionality, the privilege already held. Assign a status:
 
 - `confirmed`: every link holds, with `file:line` for entry point, source, each guard and why it fails, and sink.
@@ -89,6 +108,10 @@ expected functionality, the privilege already held. Assign a status:
 
 "I could not find the bug" is not `refuted`. Do not upgrade a status because the class is serious.
 
+### Provenance (only when the task asks for it)
+
+When a task measures the skill, record beside the findings, never inside the bench JSON, which allows no extra keys, one line per reported finding with `found_by`: `join` (a `wp_join.py` candidate), `walk` (a `wp_walk.py` function row or checklist entry), `sinks` (`wp_sinks.py` row), `map` (`wp_map.py` entry), `refutation-rule` (a candidate kept or reopened because the section 3b evidence failed) or `none` (found by reading or Grep), plus `hinted` if the plugin's own text (changelog, advisory title) named the place.
+
 ### 4. Variants
 
 For each `confirmed` finding, Grep the same sink, helper and parameter name across the plugin and open the matches. Read the changelog or readme for earlier security fixes
@@ -96,7 +119,7 @@ and check whether neighbouring code got the same fix (`reference/verification.md
 
 ### 5. Coverage
 
-List every entry point from step 1 as reviewed or skipped, with the reason, plus anything unparsed or unread. If anything is unverified the result is **partial**, and you say so.
+List every entry point from step 1 and every `wp_walk.py` checklist entry as reviewed or skipped, with the reason, plus anything unparsed or unread. If anything is unverified the result is **partial**, and you say so.
 A report with no findings and partial coverage must not read as "no vulnerabilities".
 
 ### 6. Report
@@ -158,11 +181,13 @@ All are read-only, offline and print JSON. Use `--backend regex` if tree-sitter 
 
 | Script | Use |
 |---|---|
-| `wp_map.py <dir> [--top N]` | entry points ranked by tier, with nonce and capability hints |
-| `wp_sinks.py <dir> [--class a,b] [--risk unguarded,guarded,constant]` | dangerous calls, enclosing function, guards in arguments, `risk` |
+| `wp_map.py <dir> [--top N]` | entry points ranked by tier, with nonce and capability hints, request input read up to three calls down, boot-time code and file-level request reads |
+| `wp_sinks.py <dir> [--class a,b] [--risk unguarded,guarded,constant]` | dangerous calls, enclosing function, guards in arguments, `risk`, `origin`, `request_tainted`, `function_guard_accepted`, `weak_gates_in_function`; `--sink` filters by sink name (`html-build`, `sql-build`, `safety-flag-disabled`, `filetype-override`, `unchecked-guard-result`, `meta-key`, ...) |
+| `wp_join.py <dir> [--risk unguarded,guarded] [--depth N] [--top N]` | map x sinks: ranked (entry point, reachable sink) candidates; unconfirmed tiers rank up; `unresolved_entries` and `unreached_sinks` are always listed |
+| `wp_walk.py <dir> [--depth N] [--classes ...] [--top N]` | request-built values reaching unguarded sinks per function (reached or not), plus a `checklist` of every admin page / ajax / admin-post / rest / shortcode entry to open and tick off |
 | `wp_xref.py <dir> <name>` | definitions, callers, registrations, hook handlers, callees |
 
-A `guarded` sink is a hint: check that the guard fits the context. An `unguarded` sink is a candidate, not a finding. Gaps are listed in each class file.
+A `guarded` sink is a hint: check that the guard fits the context (`function_guard_accepted` says which guard was accepted). An `unguarded` sink is a candidate, not a finding. Gaps are listed in each class file.
 
 ## Reference files
 

@@ -223,6 +223,38 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def strip_comments(text: str) -> str:
+    """Remove PHP comments (``//``, ``#``, ``/* */``) that sit outside quotes; a comment glued to an argument hides its variables from every rule."""
+    if "//" not in text and "#" not in text and "/*" not in text:
+        return text
+    out: list[str] = []
+    i, quote = 0, ""
+    while i < len(text):
+        ch = text[i]
+        if quote:
+            out.append(ch)
+            if ch == "\\" and i + 1 < len(text):
+                out.append(text[i + 1])
+                i += 1
+            elif ch == quote:
+                quote = ""
+        elif ch in "'\"":
+            quote = ch
+            out.append(ch)
+        elif text.startswith("/*", i):
+            j = text.find("*/", i + 2)
+            i = len(text) if j < 0 else j + 1
+            out.append(" ")
+        elif text.startswith("//", i) or (ch == "#" and not text.startswith("#[", i)):
+            j = text.find("\n", i)
+            i = len(text) if j < 0 else j - 1
+            out.append(" ")
+        else:
+            out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 # --------------------------------------------------------------------------- tree-sitter backend
 
 _FUNC_NODES = {"function_definition", "method_declaration", "anonymous_function"}
@@ -262,7 +294,8 @@ def _flatten_sequence(node: Any) -> Iterator[Any]:
 
 
 def _ts_args(src: bytes, args_node: Any) -> tuple[str, ...]:
-    return tuple(_text(src, a.named_children[-1] if a.named_children else a).strip() for a in args_node.named_children)
+    return tuple(strip_comments(_text(src, a.named_children[-1] if a.named_children else a)).strip()
+                 for a in args_node.named_children if a.type != "comment")
 
 
 def _parse_treesitter(parser: Any, src: bytes, rel: str) -> tuple[list[Func], list[Call]]:

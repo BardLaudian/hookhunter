@@ -53,6 +53,10 @@ Read from core `trunk` on 2026-11-01 unless the line says otherwise.
 2. Split the path into its parts: base directory (constant or `wp_upload_dir()`), directory segment, file name, extension. Which part comes from the request?
 3. Read the guard against the **primitive**: for traversal, is the final path resolved (`realpath`) and compared to the base with a trailing separator? For upload, is the **extension** decided by an allow-list on the final name, after sanitising?
 4. Check **where the file lands** and whether it is reachable and executable: the web-accessible uploads directory is, a directory protected by a web-server rule or outside the web root is not. Execution depends on server configuration, so say what you could not verify.
+4b. **Path from storage.** When the path (or file name, or include target) is read from an option, order item meta, cart, session or transient, `wp_sinks.py` shows `origin: stored`. Find the writer of that key: if a request handler
+   can set it (a subscriber's settings AJAX, a posted cart field, an imported order), the read side is a file read/include by proxy. Check the writer strips or validates the path key, not only the display name.
+4c. **Filters on the file type check.** A handler on `wp_check_filetype_and_ext` that assigns `['ext']` / `['type']`, or an `upload_mimes` handler that adds `php`, `phtml`, `html`, `svg`, `js`, overrides core's decision for everyone who can upload. `strpos( $name, '.woff' )` accepts `a.woff.php`.
+   `wp_sinks.py --sink filetype-override` lists them; the safe form compares `pathinfo()['extension']` exactly and checks the content type.
 5. Check the entry point tier (`wp_map.py`, `wp_xref.py`), and for uploads whether `upload_files` or an equivalent capability is required.
 6. For downloads and reads, check whether the target can be `wp-config.php` (database credentials and salts) or other sensitive files.
 
@@ -72,6 +76,11 @@ Read from core `trunk` on 2026-11-01 unless the line says otherwise.
 - **Read of generated files.** Exports, logs, backups and invoices saved in a predictable, web-accessible path (`uploads/plugin/export-123.csv`) are information disclosure even without a vulnerable function (`info-disclosure.md`).
 - **File content, not name.** Writing request content to a `.php` file in a theme/plugin directory, or to a config file the plugin later `include`s, is code execution without any upload.
 - **Sideload with a request path or URL.** `wp_handle_sideload( [ 'tmp_name' => $_POST['p'] … ] )` copies a local file into the uploads directory; `download_url( $_POST['url'] )` and `media_sideload_image( $_POST['url'] )` fetch a request-chosen URL (SSRF, `ssrf.md`) and store the result. Read what extension and type checks they apply in the core version in use; they were not analysed here.
+
+- **Blacklist applied to an un-normalised name.** An extension or name filter that splits on `.` and compares each part (`^(php|phtml|php\d)$`), or strips `..`, sees different text than the
+  filesystem and server do. Try: invisible or separator characters in a part (`\pC`, `\pZ`, a trailing NBSP or newline: the part no longer equals `php`), uppercase, a trailing dot or space,
+  NUL, `.phar`/`.pht`/`.phps`/`.inc`, a second extension, `$` that also matches before a final newline, URL-decoding done after the check. A blacklist that is the only guard is `needs-dynamic-check`,
+  not `refuted` (`verification.md`). Prefer: `sanitize_file_name`, then an allow-list on the **final** name, then a server-chosen name.
 
 ## 5. Vulnerable and safe shapes (generic)
 

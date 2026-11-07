@@ -16,6 +16,7 @@ a logic consequence of the code rather than something core documents, or *(PHP)*
   `admin_init`, so it is `true` for logged-out visitors calling them.
 - **Grep:** `is_admin\(` near `$_POST`, `$_GET`, `update_option`, `wp_ajax_`.
 - **Safe:** `current_user_can( $specific_capability )`.
+- **Scripts:** `wp_map.py` flags a handler `is_admin-is-not-authz` when it calls `is_admin()` with no capability check; `wp_sinks.py` lists `is_admin`, `wp_doing_ajax` and `is_user_logged_in` under `weak_gates_in_function` and never counts them as a guard.
 
 ### 2. A nonce used as authorisation
 - **Looks like:** `check_ajax_referer( 'save' )` and nothing else, on a `wp_ajax_*` handler.
@@ -154,6 +155,25 @@ a logic consequence of the code rather than something core documents, or *(PHP)*
 - **Check:** before confirming `sqli` (quoted position), `object-injection`, `xxe` or `rce` by code string, point at the line that restores the quotes. If there is none the candidate is
   `refuted` (`source-still-slashed`); if a filter or wrapper might unslash, `needs-dynamic-check`.
 
+### 20. A guard that does not act on the sink's value, or only records the problem
+- **Looks like:** `basename(`, `in_array(`, `validate_file(` or a helper named `...DetectTraversal()` in the same function as the sink.
+- **Why it fails:** it counts only if its result is assigned back to the sink variable, the sink sits inside the `if` that tests it, or failing ends the request. `basename()` inside `header()`,
+  an `in_array()` in a click log, a helper that logs and returns are decoration. **Check:** helper body for `exit`/`wp_die`/`return` on failure, caller uses result (4, 10). `wp_sinks.py`: `function_guard_accepted`.
+
+### 21. A check helper that returns an error instead of stopping
+- **Looks like:** `$user = $this->check_login_and_get_user( $id, $nonce );` where the helper does `return new WP_REST_Response( …, 403 )`, `return new WP_Error(…)` or `return false`.
+- **Why it fails:** nothing aborts; if the caller never tests `$user` (`is_wp_error`, `instanceof`, `if ( ! $user )`) the next lines run with an error object. **Script:** `wp_sinks.py --sink unchecked-guard-result`.
+
+### 22. Login, password or account functions with no proof of identity
+- **Looks like:** `reset_password( $user, $_POST['p'] )`, `wp_set_password`, `wp_set_auth_cookie( $id )`, `wp_set_current_user`, `wp_signon`, `wp_create_user` in a `nopriv`/`init`/REST handler whose `$user` comes from the request.
+- **Why it fails:** a visitor's nonce is public (3). Without a reset-key check (`check_password_reset_key`), a verified OTP/2FA state, a signed token or a capability, whoever names the account gets it.
+  **Check:** walk up from the call to the proof; it must come first and failure must stop. **Script:** `wp_map.py` flag `account-control-reachable` ranks these handlers first in their tier.
+
+### 23. Request data replaces a generated secret, or a security filter reads the request
+- **Looks like:** `add_filter( 'random_password', … )`, `wp_generate_password`, `authenticate`, `retrieve_password_*`, `registration_errors` handlers that read `$_POST` / `$_REQUEST`, often to support "choose your own password at signup".
+- **Why it fails:** those hooks also fire in the lost-password and admin-created-user flows. If the handler does not check which flow it is in (`did_action('login_form_register')`, `$_GET['action']`), a visitor's value becomes the new password of an account chosen by someone else.
+  **Check:** which actions can reach the hook; does the request value replace a secret a different actor generated? **Script:** `wp_map.py` lists these as `auth-hook`.
+
 ## Refutation shortcuts
 
 Before dismissing a candidate because of a guard, ask which of these applies:
@@ -163,6 +183,7 @@ Before dismissing a candidate because of a guard, ask which of these applies:
 4. Does the code run for logged-out visitors, and is it the same function as the `nopriv` hook (7)?
 5. Is the site type relevant: multisite, `DISALLOW_UNFILTERED_HTML` (6)?
 6. Does a quote-dependent payload arrive slashed with nothing to restore the quotes (19)?
+7. Does the guard act on the value that reaches the sink and stop on failure (20, 21)? Does an account function (22) run with no proof of identity first?
 
 ## Sources
 
@@ -170,17 +191,9 @@ Before dismissing a candidate because of a guard, ask which of these applies:
 - [Nonces (APIs handbook)](https://developer.wordpress.org/apis/security/nonces/), [`wp_verify_nonce()`](https://developer.wordpress.org/reference/functions/wp_verify_nonce/), [`check_ajax_referer()`](https://developer.wordpress.org/reference/functions/check_ajax_referer/), [`wp_create_nonce()`](https://developer.wordpress.org/reference/functions/wp_create_nonce/)
 - [Common vulnerabilities (APIs handbook)](https://developer.wordpress.org/apis/security/common-vulnerabilities/) and [Checking user capabilities](https://developer.wordpress.org/plugins/security/checking-user-capabilities/)
 - [Roles and capabilities (Plugin Handbook)](https://developer.wordpress.org/plugins/users/roles-and-capabilities/)
-- [`wp_redirect()`](https://developer.wordpress.org/reference/functions/wp_redirect/), [`wp_send_json()`](https://developer.wordpress.org/reference/functions/wp_send_json/), [`add_query_arg()`](https://developer.wordpress.org/reference/functions/add_query_arg/)
-- [`wpdb::insert()`](https://developer.wordpress.org/reference/classes/wpdb/insert/), [`register_setting()`](https://developer.wordpress.org/reference/functions/register_setting/)
+- [`wp_redirect()`](https://developer.wordpress.org/reference/functions/wp_redirect/), [`wp_send_json()`](https://developer.wordpress.org/reference/functions/wp_send_json/), [`add_query_arg()`](https://developer.wordpress.org/reference/functions/add_query_arg/); [`wpdb::insert()`](https://developer.wordpress.org/reference/classes/wpdb/insert/), [`register_setting()`](https://developer.wordpress.org/reference/functions/register_setting/)
 - WordPress core `trunk`, read 2026-11-01:
-  [`wp-admin/admin-ajax.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-admin/admin-ajax.php) and [`admin-post.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-admin/admin-post.php) (`WP_ADMIN`, `admin_init`, dispatch),
-  [`wp-includes/load.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/load.php) (`is_admin`, `wp_magic_quotes`),
-  [`wp-includes/capabilities.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/capabilities.php) (`is_super_admin`, `unfiltered_html`, `edit_post`),
-  [`wp-includes/pluggable.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/pluggable.php) (nonces, `wp_redirect`),
-  [`wp-includes/user.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/user.php) (`wp_get_session_token`),
-  [`wp-includes/class-wp-user.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/class-wp-user.php) (capabilities key),
-  [`wp-includes/class-wpdb.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/class-wpdb.php) (`_insert_replace_helper`),
-  [`wp-includes/functions.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/functions.php) (`add_query_arg`, `wp_send_json`)
-- PHP manual: [comparison operators and type juggling](https://www.php.net/manual/en/language.operators.comparison.php), [`hash_equals`](https://www.php.net/manual/en/function.hash-equals.php), [`uniqid`](https://www.php.net/manual/en/function.uniqid.php), [`mt_rand`](https://www.php.net/manual/en/function.mt-rand.php)
-- [MDN: X-Forwarded-For](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Forwarded-For)
+  [`wp-admin/admin-ajax.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-admin/admin-ajax.php) and [`admin-post.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-admin/admin-post.php) (`WP_ADMIN`, `admin_init`, dispatch), [`wp-includes/load.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/load.php) (`is_admin`, `wp_magic_quotes`), [`wp-includes/capabilities.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/capabilities.php) (`is_super_admin`, `unfiltered_html`, `edit_post`), [`wp-includes/pluggable.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/pluggable.php) (nonces, `wp_redirect`)
+  [`wp-includes/user.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/user.php) (`wp_get_session_token`), [`wp-includes/class-wp-user.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/class-wp-user.php) (capabilities key), [`wp-includes/class-wpdb.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/class-wpdb.php) (`_insert_replace_helper`), [`wp-includes/functions.php`](https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/functions.php) (`add_query_arg`, `wp_send_json`)
+- PHP manual: [comparison operators and type juggling](https://www.php.net/manual/en/language.operators.comparison.php), [`hash_equals`](https://www.php.net/manual/en/function.hash-equals.php), [`uniqid`](https://www.php.net/manual/en/function.uniqid.php), [`mt_rand`](https://www.php.net/manual/en/function.mt-rand.php); [MDN: X-Forwarded-For](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Forwarded-For)
 - [OWASP Insecure Direct Object Reference Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html) and [CWE-639](https://cwe.mitre.org/data/definitions/639.html)
