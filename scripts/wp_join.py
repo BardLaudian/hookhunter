@@ -141,7 +141,8 @@ def build_join(idx: Index, risks: set[str], depth: int) -> dict[str, Any]:
                           "flags": e.get("flags", []), "nonce_check": e.get("nonce_check"), "cap_check": e.get("cap_check"),
                           "tier_basis": e.get("tier_basis")},
                 "sink": {"file": s["file"], "line": s["line"], "function": s["function"], "sink": s["sink"], "call": s["call"],
-                         "classes": s["classes"], "risk": s["risk"], "origin": s.get("origin"), "args": s.get("args")},
+                         "classes": s["classes"], "risk": s["risk"], "origin": s.get("origin"), "args": s.get("args"),
+                         "request_tainted": bool(s.get("request_tainted"))},
                 "distance": dist,
                 "path": path,
                 "request_input": bool(e.get("superglobals") or e.get("superglobals_via_callees")),
@@ -153,7 +154,8 @@ def build_join(idx: Index, risks: set[str], depth: int) -> dict[str, Any]:
                               min((IMPACT.get(k, 3) for k in c["sink"]["classes"]), default=3), c["sink"]["origin"] != "request", c["distance"]))
     for n, c in enumerate(cands, 1):
         c["rank"] = n
-    unreached = [{"at": f"{s['file']}:{s['line']}", "function": s["function"], "sink": s["sink"], "classes": s["classes"], "origin": s.get("origin")}
+    unreached = [{"at": f"{s['file']}:{s['line']}", "function": s["function"], "sink": s["sink"], "classes": s["classes"], "origin": s.get("origin"),
+                  "request_tainted": bool(s.get("request_tainted"))}
                  for i, s in enumerate(sinks) if i not in reached and s["risk"] == "unguarded"]
     return {"entries": len(entries), "sinks_considered": len(sinks), "entries_with_no_reachable_sink": without_sink,
             "candidates": cands, "unresolved_entries": unresolved, "unreached_sinks": unreached}

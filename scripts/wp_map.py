@@ -14,6 +14,7 @@ Static analysis only; nothing is executed or fetched.
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import json
 import re
 import sys
@@ -208,6 +209,9 @@ def build_map(idx: Index) -> list[dict[str, Any]]:
             cron_hooks.add(literal(c.args[1]) or "")
 
     for c in idx.calls:
+        if c.kind == "method" and c.name in _HOOK_ADDERS and len(c.args) >= 3:
+            # loader objects ($this->loader->add_action('hook', $component, 'method'), the WordPress Plugin Boilerplate shape)
+            c = replace(c, kind="func", args=(c.args[0], f"array({c.args[1]}, {c.args[2]})", *c.args[3:]))
         if c.kind not in ("func",):
             continue
         n = c.name

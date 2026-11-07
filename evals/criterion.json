@@ -1,0 +1,9 @@
+{
+  "_doc": "Thresholds for loop.py's verdict. Rationale in evals/CRITERION.md. Change them only before looking at a new batch.",
+  "min_cases": 40,
+  "min_recall_gain": 0.15,
+  "min_recall_C": 0.60,
+  "max_findings_per_run": 6,
+  "max_cost_ratio": 2.0,
+  "max_invalid_rate": 0.05
+}

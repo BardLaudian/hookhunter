@@ -238,7 +238,8 @@ def tainted_vars(body: str) -> frozenset[str]:
 _WALK_SRC_RE = re.compile(
     REQUEST_SOURCE_RE.pattern
     + r"|\$_SERVER\s*\[\s*['\"](?:REQUEST_URI|PHP_SELF|QUERY_STRING|HTTP_HOST|HTTP_REFERER|PATH_INFO)['\"]\s*\]"
-    + r"|\$(?:this|request|req|params|post|input)\s*->\s*(?:get|input|param|query|post)\s*\(\s*['\"]\w+['\"]\s*\)"
+    + r"|\$(?:this|request|req|params|post|input|wp_query|query|wp)\s*->\s*(?:get|input|param|query|post|get_param|query_vars)\b\s*[\(\[]\s*['\"]\w+['\"]\s*[\)\]]"
+    + r"|\$request\s*\[\s*['\"]\w+['\"]\s*\]|\$wp_query\s*->\s*query_vars\s*\["
     + r"|\bget_query_var\s*\(|\bfilter_input\s*\(|\bget_search_query\s*\("
     + r"|\badd_query_arg\s*\(\s*(?:'[^']*'|\"[^\"]*\")\s*,\s*[^,()]+\)(?!\s*,)")
 
@@ -588,6 +589,10 @@ def _extra_sinks(idx: Index) -> list[dict[str, Any]]:
 _SQL_LIT_RE = re.compile(r'"(?:\\.|[^"\\])*"', re.S)
 _SQL_WORD_RE = re.compile(r"\b(?:LIKE|WHERE|SELECT|INSERT|UPDATE|DELETE|ORDER\s+BY|IN\s*\()\b|\b(?:AND|OR)\s+[\w.`$>{}-]+\s*(?:=|LIKE)", re.I)
 _SQL_INTERP_RE = re.compile(r"'\s*\{?(\$[A-Za-z_]\w*)(?:\}|\b)")
+# Unquoted interpolation in a numeric SQL position (= < > BETWEEN ... AND, IN (, LIMIT, OFFSET): quotes are not needed to inject there.
+_SQL_NUM_INTERP_RE = re.compile(r"(?:[=<>]|\bBETWEEN|\bAND|\bIN\s*\(|\bLIMIT|\bOFFSET|,)\s*\{?(\$[A-Za-z_]\w*)((?:\[[^\]]{1,30}\])*)\}?(?!\s*\w*')", re.I)
+_SQL_NUM_WORD_RE = re.compile(r"\b(?:WHERE|BETWEEN|LIMIT|OFFSET|IN\s*\(|ORDER\s+BY|SELECT|UPDATE|DELETE)\b|\bAND\s*\(?\s*[\w.`]+\s*(?:BETWEEN|[=<>])", re.I)
+_SQL_TABLEISH_RE = re.compile(r"^\$(?:wpdb|table|tbl|prefix|this)", re.I)
 _SQL_SAFE_ASSIGN_RE = re.compile(r"esc_sql|absint|intval|floatval|\(int\)|\(float\)|->prepare\s*\(|sanitize_key")
 _FLAG_PARAM_RE = re.compile(r"^\$(?:safe|verify|validate|sanitize|sanitise|check|secure|strict|escape|escaped|sslverify|ssl_verify|enforce|restrict)\w*$", re.I)
 _FLAG_DEF_RE = re.compile(r"function\s+&?\s*\w*\s*\(", re.S)
@@ -633,7 +638,7 @@ def _more_sinks(idx: Index) -> list[dict[str, Any]]:
         assigns = {v: rhs for v, rhs, _ in _assignments(body)}
         for lm in _SQL_LIT_RE.finditer(body):
             lit = lm.group()
-            if not _SQL_WORD_RE.search(lit):
+            if not (_SQL_WORD_RE.search(lit) or _SQL_NUM_WORD_RE.search(lit)):
                 continue
             pre = body[max(0, lm.start() - 60):lm.start()]
             if re.search(r"prepare\s*\(\s*$", pre) or "->prepare" in pre[-30:]:
@@ -652,6 +657,25 @@ def _more_sinks(idx: Index) -> list[dict[str, Any]]:
                     "add_slashes from magic quotes can turn \\' into \\\\'); where does this fragment end up (posts_search / where filters, $wpdb->query)?",
                     {"origin": origin} if origin else None)
                 break
+            else:
+                if not _SQL_NUM_WORD_RE.search(lit):
+                    continue
+                for vm in _SQL_NUM_INTERP_RE.finditer(lit):
+                    var = vm.group(1)
+                    if _SQL_TABLEISH_RE.match(var):
+                        continue
+                    rhs = assigns.get(var, "")
+                    if rhs and _SQL_SAFE_ASSIGN_RE.search(rhs):
+                        continue
+                    if re.search(r"(?:absint|intval|floatval|\(int\)|\(float\))\s*\(?\s*" + re.escape(var) + r"\b", body):
+                        continue
+                    origin = "request" if var in reqt else ("stored" if var in stored else "")
+                    line = f.line + body.count("\n", 0, lm.start())
+                    rec(f, line, "sql-build", ["sqli"], "(string)", lit.strip()[:150],
+                        f"unquoted variable {var}{vm.group(2)} in a numeric SQL position (comparison, BETWEEN, IN, LIMIT): no quote is needed to inject; "
+                        "is it cast to int/float on every path before it reaches the query?",
+                        {"origin": origin} if origin else None)
+                    break
 
     # 2. safety flag switched off: callee has a $safe/$verify/... = true parameter and the call passes false
     flagged: dict[str, list[tuple[Func, dict[int, str]]]] = {}

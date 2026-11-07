@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/wp-audit-bench/findings.schema.json",
+  "title": "wp-audit-bench findings",
+  "description": "Output of one audit run (docs/SPEC.md section 4). Enumerations follow skills/hookhunter/SKILL.md; see docs/DECISIONS.md section 9.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["findings"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "line_start", "line_end", "function", "entry_point", "cwe", "class", "auth_required", "data_flow", "confidence"],
+        "properties": {
+          "file": {"type": "string", "minLength": 1, "pattern": "^[^/\\\\][^\\\\]*$"},
+          "line_start": {"type": "integer", "minimum": 1},
+          "line_end": {"type": "integer", "minimum": 1},
+          "function": {"type": "string"},
+          "entry_point": {"type": "string"},
+          "cwe": {"type": "string", "pattern": "^CWE-[0-9]+$"},
+          "class": {"enum": ["stored-xss", "reflected-xss", "dom-xss", "sqli", "missing-authz", "csrf", "path-traversal", "file-delete", "file-upload", "file-inclusion", "object-injection", "ssrf", "open-redirect", "privesc", "rce", "info-disclosure", "xxe"]},
+          "auth_required": {"enum": ["unauthenticated", "subscriber", "contributor", "admin"]},
+          "data_flow": {"type": "string", "minLength": 1},
+          "confidence": {"enum": ["high", "medium", "low"]}
+        }
+      }
+    }
+  }
+}
